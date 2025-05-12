@@ -328,19 +328,39 @@
         if (input.value) cons.push(input.value);
       });
       
-      // Submit to plugin code
-      parent.postMessage({
-        pluginMessage: {
-          type: 'create-decision',
-          title,
-          context,
-          rationale,
-          links,
-          pros,
-          cons,
-          tags: currentTags
-        }
-      }, '*');
+      // Check if we're editing or creating
+      if (editingDecisionId) {
+        // Editing an existing decision
+        parent.postMessage({
+          pluginMessage: {
+            type: 'edit-decision',
+            decision: {
+              id: editingDecisionId,
+              title,
+              context,
+              rationale,
+              links,
+              pros,
+              cons,
+              tags: currentTags
+            }
+          }
+        }, '*');
+      } else {
+        // Creating a new decision
+        parent.postMessage({
+          pluginMessage: {
+            type: 'create-decision',
+            title,
+            context,
+            rationale,
+            links,
+            pros,
+            cons,
+            tags: currentTags
+          }
+        }, '*');
+      }
     });
 
     // Add new link input field
@@ -440,7 +460,23 @@
     
     // Cancel button
     document.getElementById('cancel').addEventListener('click', () => {
-      parent.postMessage({ pluginMessage: { type: 'close' } }, '*');
+      // Reset form and editing state
+      document.getElementById('decision-form').reset();
+      document.getElementById('links-container').innerHTML = '';
+      document.getElementById('pros-container').innerHTML = '';
+      document.getElementById('cons-container').innerHTML = '';
+      currentTags = [];
+      renderTags();
+      editingDecisionId = null;
+      document.getElementById('save-decision').textContent = 'Save Decision';
+      
+      // Add empty fields back
+      addLinkField();
+      addListItem('pros-container', 'pro-item');
+      addListItem('cons-container', 'con-item');
+      
+      // Switch to history tab
+      switchTab('history');
     });
     
     // Search and filter functionality
