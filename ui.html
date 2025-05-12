@@ -260,6 +260,19 @@
         </div>
       </div>
       
+      <!-- Figma Element Section -->
+      <div class="section">
+        <h3>Linked Figma Element</h3>
+        <div id="figma-node-info" class="figma-node-info">
+          <div id="no-selection" style="color: #888; font-style: italic;">No element selected. Select a Figma element before creating a decision to link it.</div>
+          <div id="node-selection" style="display: none;">
+            <div class="tag" style="background-color: #E9F5FF; color: #007ACC;">
+              <span id="node-name">Element name</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <div class="form-actions">
         <button type="submit" id="save-decision" class="button">Save Decision</button>
         <button type="button" id="cancel" class="button secondary">Cancel</button>
@@ -278,6 +291,8 @@
     let currentUser = null;
     let editingDecisionId = null;
     let currentTags = [];
+    let selectedNodeId = null;
+    let selectedNodeName = null;
     
     // Get current user info
     parent.postMessage({ pluginMessage: { type: 'get-user-info' } }, '*');
@@ -342,7 +357,9 @@
               links,
               pros,
               cons,
-              tags: currentTags
+              tags: currentTags,
+              nodeId: selectedNodeId,
+              nodeName: selectedNodeName
             }
           }
         }, '*');
@@ -357,7 +374,9 @@
             links,
             pros,
             cons,
-            tags: currentTags
+            tags: currentTags,
+            nodeId: selectedNodeId,
+            nodeName: selectedNodeName
           }
         }, '*');
       }
@@ -524,6 +543,18 @@
         const date = new Date(decision.timestamp);
         const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
         
+        // Prepare the Figma node link section if it exists
+        let figmaNodeSection = '';
+        if (decision.nodeId && decision.nodeName) {
+          figmaNodeSection = `
+            <div class="figma-node-link" style="margin-top: 8px;">
+              <div class="tag" style="background-color: #E9F5FF; color: #007ACC; display: inline-flex; cursor: pointer;" data-node-id="${decision.nodeId}">
+                <span class="material-icons" style="font-size: 12px; margin-right: 4px;">link</span>
+                <span>${decision.nodeName}</span>
+              </div>
+            </div>`;
+        }
+        
         card.innerHTML = `
           <div class="decision-header">
             <div class="decision-title">${decision.title}</div>
@@ -536,6 +567,7 @@
             `<div class="tags-container">
               ${decision.tags.map(tag => `<div class="tag"><span>${tag}</span></div>`).join('')}
             </div>` : ''}
+          ${figmaNodeSection}
           <div class="decision-actions">
             <button class="button secondary view-details" data-id="${decision.id}">View Details</button>
             <button class="button secondary edit-decision" data-id="${decision.id}">Edit</button>
@@ -559,7 +591,28 @@
             deleteDecision(decision.id);
           }
         });
+        
+        // Add node navigation event listener if there's a linked node
+        const figmaNodeLink = card.querySelector('.figma-node-link .tag');
+        if (figmaNodeLink) {
+          figmaNodeLink.addEventListener('click', () => {
+            const nodeId = figmaNodeLink.dataset.nodeId;
+            navigateToNode(nodeId);
+          });
+        }
       });
+    }
+    
+    // Function to navigate to a Figma node
+    function navigateToNode(nodeId) {
+      if (!nodeId) return;
+      
+      parent.postMessage({
+        pluginMessage: {
+          type: 'navigate-to-node',
+          nodeId
+        }
+      }, '*');
     }
     
     function viewDecisionDetails(id) {
@@ -567,14 +620,26 @@
       const decision = decisions.find(d => d.id === id);
       if (!decision) return;
       
+      // Include node information in the details if it exists
+      const nodeInfo = (decision.nodeId && decision.nodeName) ? 
+        `\nLinked Element: ${decision.nodeName}` : 
+        '\nNo linked Figma element';
+      
       // This is a simple implementation; you might want to create a modal for better UX
       alert(`
         Title: ${decision.title}
         Context: ${decision.context}
         Rationale: ${decision.rationale}
         Author: ${decision.author}
-        Date: ${new Date(decision.timestamp).toLocaleString()}
+        Date: ${new Date(decision.timestamp).toLocaleString()}${nodeInfo}
       `);
+      
+      // If there's a linked node, ask if the user wants to navigate to it
+      if (decision.nodeId && decision.nodeName) {
+        if (confirm(`Do you want to navigate to the linked element "${decision.nodeName}"?`)) {
+          navigateToNode(decision.nodeId);
+        }
+      }
     }
     
     function editDecision(id) {
@@ -586,6 +651,23 @@
       document.getElementById('title').value = decision.title;
       document.getElementById('context').value = decision.context;
       document.getElementById('rationale').value = decision.rationale;
+      
+      // Set selected node info
+      selectedNodeId = decision.nodeId || null;
+      selectedNodeName = decision.nodeName || null;
+      
+      // Update the node info display in the form
+      const noSelectionElement = document.getElementById('no-selection');
+      const nodeSelectionElement = document.getElementById('node-selection');
+      
+      if (selectedNodeId && selectedNodeName) {
+        noSelectionElement.style.display = 'none';
+        nodeSelectionElement.style.display = 'block';
+        document.getElementById('node-name').textContent = selectedNodeName;
+      } else {
+        noSelectionElement.style.display = 'block';
+        nodeSelectionElement.style.display = 'none';
+      }
       
       // Clear existing fields
       document.getElementById('links-container').innerHTML = '';
@@ -712,6 +794,26 @@
           decisions = message.decisions || [];
           renderDecisionsList();
           populateTagFilter();
+          break;
+          
+        case 'selection-info':
+          // Update the UI to show the currently selected node
+          selectedNodeId = message.nodeId;
+          selectedNodeName = message.nodeName;
+          
+          const noSelectionElement = document.getElementById('no-selection');
+          const nodeSelectionElement = document.getElementById('node-selection');
+          
+          if (selectedNodeId && selectedNodeName) {
+            // Show the selected node info
+            noSelectionElement.style.display = 'none';
+            nodeSelectionElement.style.display = 'block';
+            document.getElementById('node-name').textContent = selectedNodeName;
+          } else {
+            // Show the "no selection" message
+            noSelectionElement.style.display = 'block';
+            nodeSelectionElement.style.display = 'none';
+          }
           break;
           
         case 'decision-created':

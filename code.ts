@@ -12,6 +12,8 @@ interface Decision {
   pros?: string[];
   cons?: string[];
   tags?: string[];
+  nodeId?: string;
+  nodeName?: string;
 }
 
 // In-memory storage for decisions (will be persisted to clientStorage)
@@ -32,10 +34,43 @@ async function initializePlugin() {
     console.error('Error loading saved decisions:', error);
     figma.notify('Error loading saved decisions');
   }
+
+  // Send current selection info to UI
+  sendSelectionInfo();
+}
+
+// Send information about the currently selected node to the UI
+function sendSelectionInfo() {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 1) {
+    const selectedNode = selection[0];
+    figma.ui.postMessage({
+      type: 'selection-info',
+      nodeId: selectedNode.id,
+      nodeName: selectedNode.name
+    });
+  } else if (selection.length > 1) {
+    figma.ui.postMessage({
+      type: 'selection-info',
+      nodeId: null,
+      nodeName: `Multiple items (${selection.length})`
+    });
+  } else {
+    figma.ui.postMessage({
+      type: 'selection-info',
+      nodeId: null,
+      nodeName: null
+    });
+  }
 }
 
 // Initialize the plugin
 initializePlugin();
+
+// Handle selection changes
+figma.on('selectionchange', () => {
+  sendSelectionInfo();
+});
 
 // Handle messages from the UI
 figma.ui.onmessage = async (msg) => {
@@ -52,7 +87,9 @@ figma.ui.onmessage = async (msg) => {
         links: msg.links || [],
         pros: msg.pros || [],
         cons: msg.cons || [],
-        tags: msg.tags || []
+        tags: msg.tags || [],
+        nodeId: msg.nodeId,
+        nodeName: msg.nodeName
       };
       
       // Add to our list and save
@@ -110,6 +147,41 @@ figma.ui.onmessage = async (msg) => {
         name: figma.currentUser?.name,
         id: figma.currentUser?.id
       });
+      break;
+    }
+    
+    case 'navigate-to-node': {
+      const nodeId = msg.nodeId;
+      if (nodeId) {
+        try {
+          const node = await figma.getNodeByIdAsync(nodeId);
+          if (node && node.type !== 'DOCUMENT' && node.type !== 'PAGE') {
+            // Only scene nodes (like layers) can be selected - not pages or the document
+            const sceneNode = node as SceneNode;
+            
+            // Select the node first
+            figma.currentPage.selection = [sceneNode];
+            
+            // Get node's absolute position in the canvas
+            // Wait a moment to ensure the node is properly selected before centering
+            setTimeout(() => {
+              // First reset the zoom level to ensure consistency
+              figma.viewport.zoom = 0.5;
+              
+              // Center viewport on the node
+              figma.viewport.scrollAndZoomIntoView([sceneNode]);
+              
+              // Notify success
+              figma.notify('Navigated to linked element');
+            }, 100);
+          } else {
+            figma.notify('Could not find the linked element or it cannot be selected', { error: true });
+          }
+        } catch (error) {
+          console.error('Error navigating to node:', error);
+          figma.notify('Could not find the linked element', { error: true });
+        }
+      }
       break;
     }
       
