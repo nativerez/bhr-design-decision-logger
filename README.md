@@ -71,4 +71,4 @@ Future versions will support:
 
 ## License
 
-Copyright © 2025. All rights reserved.
+Copyright © BrightHR 2025. All rights reserved.

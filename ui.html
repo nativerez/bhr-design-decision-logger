@@ -168,8 +168,10 @@
       margin-bottom: 12px;
       gap: 8px;
     }
-    .filter-bar input {
+    .filter-bar input, 
+    .filter-bar select {
       flex: 1;
+      min-width: 0; /* Prevents flex items from overflowing */
     }
   </style>
 </head>
