@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      background: #fff;
+      padding: 8px;
+      overflow-x: hidden;
+    }
+    h2 {
+      margin-bottom: 16px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    h3 {
+      margin-bottom: 12px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .tab-container {
+      display: flex;
+      border-bottom: 1px solid #e5e5e5;
+      margin-bottom: 16px;
+    }
+    .tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #333;
+    }
+    .tab.active {
+      border-bottom: 2px solid #18a0fb;
+      color: #18a0fb;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+    }
+    textarea {
+      height: 80px;
+      resize: vertical;
+    }
+    .link-item {
+      display: flex;
+      margin-bottom: 8px;
+    }
+    .link-item input {
+      flex: 1;
+      margin-right: 8px;
+    }
+    .link-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    .pros-cons {
+      display: flex;
+      gap: 12px;
+    }
+    .pros, .cons {
+      flex: 1;
+    }
+    .list-item {
+      display: flex;
+      margin-bottom: 6px;
+    }
+    .list-item input {
+      flex: 1;
+      margin-right: 8px;
+    }
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .tag {
+      background: #f0f0f0;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+    }
+    .tag span {
+      margin-right: 4px;
+    }
+    .tag button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 10px;
+    }
+    .button {
+      background: #18a0fb;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .button.secondary {
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #e5e5e5;
+    }
+    .button.danger {
+      background: #ff5252;
+    }
+    .decision-list {
+      margin-top: 12px;
+    }
+    .decision-card {
+      padding: 12px;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    .decision-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .decision-title {
+      font-weight: 600;
+    }
+    .decision-meta {
+      font-size: 10px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .decision-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+    }
+    .section {
+      margin-bottom: 12px;
+    }
+    .filter-bar {
+      display: flex;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+    .filter-bar input {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="tab-container">
+    <div id="tab-history" class="tab active">Decision History</div>
+    <div id="tab-new" class="tab">New Decision</div>
+  </div>
+
+  <!-- Decision History Tab -->
+  <div id="content-history" class="tab-content active">
+    <div class="filter-bar">
+      <input type="text" id="search-input" placeholder="Search decisions...">
+      <select id="filter-tags">
+        <option value="">All tags</option>
+      </select>
+    </div>
+    <div class="decision-list" id="decision-list">
+      <!-- Decision cards will be inserted here -->
+      <div class="empty-state">No decisions recorded yet.</div>
+    </div>
+  </div>
+
+  <!-- New Decision Tab -->
+  <div id="content-new" class="tab-content">
+    <form id="decision-form">
+      <div class="form-group">
+        <label for="title">Decision Title</label>
+        <input type="text" id="title" placeholder="What is the decision about?" required>
+      </div>
+      <div class="form-group">
+        <label for="context">Context</label>
+        <textarea id="context" placeholder="What is the background for this decision?" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="rationale">Rationale</label>
+        <textarea id="rationale" placeholder="Why was this decision made?" required></textarea>
+      </div>
+      
+      <!-- Links Section -->
+      <div class="section">
+        <h3>Links & References</h3>
+        <div id="links-container">
+          <div class="link-item">
+            <input type="text" placeholder="Title" class="link-title">
+            <input type="text" placeholder="URL" class="link-url">
+            <button type="button" class="button secondary remove-link">✕</button>
+          </div>
+        </div>
+        <button type="button" id="add-link" class="button secondary">Add Link</button>
+      </div>
+      
+      <!-- Pros & Cons Section -->
+      <div class="section">
+        <h3>Pros & Cons</h3>
+        <div class="pros-cons">
+          <div class="pros">
+            <label>Pros</label>
+            <div id="pros-container">
+              <div class="list-item">
+                <input type="text" class="pro-item" placeholder="Add a pro">
+                <button type="button" class="button secondary remove-item">✕</button>
+              </div>
+            </div>
+            <button type="button" id="add-pro" class="button secondary">Add Pro</button>
+          </div>
+          <div class="cons">
+            <label>Cons</label>
+            <div id="cons-container">
+              <div class="list-item">
+                <input type="text" class="con-item" placeholder="Add a con">
+                <button type="button" class="button secondary remove-item">✕</button>
+              </div>
+            </div>
+            <button type="button" id="add-con" class="button secondary">Add Con</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Tags Section -->
+      <div class="section">
+        <h3>Tags</h3>
+        <input type="text" id="tag-input" placeholder="Add tags (comma separated)">
+        <div class="tags-container" id="tags-container">
+          <!-- Tags will be inserted here -->
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" id="save-decision" class="button">Save Decision</button>
+        <button type="button" id="cancel" class="button secondary">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Edit Decision Modal (hidden by default) -->
+  <div id="edit-modal" style="display: none;">
+    <!-- Edit form will be similar to new decision form -->
+  </div>
+
+  <script>
+    // Global variables
+    let decisions = [];
+    let currentUser = null;
+    let editingDecisionId = null;
+    let currentTags = [];
+    
+    // Get current user info
+    parent.postMessage({ pluginMessage: { type: 'get-user-info' } }, '*');
+
+    // Tab navigation
+    document.getElementById('tab-history').addEventListener('click', () => switchTab('history'));
+    document.getElementById('tab-new').addEventListener('click', () => switchTab('new'));
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+      
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(`content-${tabId}`).classList.add('active');
+    }
+
+    // Handle form submission
+    document.getElementById('decision-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const title = document.getElementById('title').value;
+      const context = document.getElementById('context').value;
+      const rationale = document.getElementById('rationale').value;
+      
+      // Gather links
+      const links = [];
+      document.querySelectorAll('.link-item').forEach(linkItem => {
+        const titleInput = linkItem.querySelector('.link-title');
+        const urlInput = linkItem.querySelector('.link-url');
+        
+        if (titleInput.value && urlInput.value) {
+          links.push({
+            title: titleInput.value,
+            url: urlInput.value
+          });
+        }
+      });
+      
+      // Gather pros
+      const pros = [];
+      document.querySelectorAll('.pro-item').forEach(input => {
+        if (input.value) pros.push(input.value);
+      });
+      
+      // Gather cons
+      const cons = [];
+      document.querySelectorAll('.con-item').forEach(input => {
+        if (input.value) cons.push(input.value);
+      });
+      
+      // Submit to plugin code
+      parent.postMessage({
+        pluginMessage: {
+          type: 'create-decision',
+          title,
+          context,
+          rationale,
+          links,
+          pros,
+          cons,
+          tags: currentTags
+        }
+      }, '*');
+    });
+
+    // Add new link input field
+    document.getElementById('add-link').addEventListener('click', addLinkField);
+    
+    function addLinkField() {
+      const container = document.getElementById('links-container');
+      const linkItem = document.createElement('div');
+      linkItem.classList.add('link-item');
+      linkItem.innerHTML = `
+        <input type="text" placeholder="Title" class="link-title">
+        <input type="text" placeholder="URL" class="link-url">
+        <button type="button" class="button secondary remove-link">✕</button>
+      `;
+      container.appendChild(linkItem);
+      
+      // Add event listener to the remove button
+      linkItem.querySelector('.remove-link').addEventListener('click', () => {
+        container.removeChild(linkItem);
+      });
+    }
+    
+    // Add event listeners for existing remove buttons
+    document.querySelectorAll('.remove-link').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const linkItem = e.target.closest('.link-item');
+        linkItem.parentNode.removeChild(linkItem);
+      });
+    });
+    
+    // Add pro item
+    document.getElementById('add-pro').addEventListener('click', () => {
+      addListItem('pros-container', 'pro-item');
+    });
+    
+    // Add con item
+    document.getElementById('add-con').addEventListener('click', () => {
+      addListItem('cons-container', 'con-item');
+    });
+    
+    function addListItem(containerId, className) {
+      const container = document.getElementById(containerId);
+      const listItem = document.createElement('div');
+      listItem.classList.add('list-item');
+      listItem.innerHTML = `
+        <input type="text" class="${className}" placeholder="Add an item">
+        <button type="button" class="button secondary remove-item">✕</button>
+      `;
+      container.appendChild(listItem);
+      
+      // Add event listener to the remove button
+      listItem.querySelector('.remove-item').addEventListener('click', () => {
+        container.removeChild(listItem);
+      });
+    }
+    
+    // Handle tag input
+    document.getElementById('tag-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const input = document.getElementById('tag-input');
+        const tagText = input.value.trim();
+        
+        if (tagText && !currentTags.includes(tagText)) {
+          addTag(tagText);
+          input.value = '';
+        }
+      }
+    });
+    
+    function addTag(tagText) {
+      currentTags.push(tagText);
+      renderTags();
+    }
+    
+    function renderTags() {
+      const container = document.getElementById('tags-container');
+      container.innerHTML = '';
+      
+      currentTags.forEach(tag => {
+        const tagElement = document.createElement('div');
+        tagElement.classList.add('tag');
+        tagElement.innerHTML = `
+          <span>${tag}</span>
+          <button type="button" data-tag="${tag}">✕</button>
+        `;
+        container.appendChild(tagElement);
+        
+        // Add event listener to remove tag
+        tagElement.querySelector('button').addEventListener('click', (e) => {
+          const tagToRemove = e.target.dataset.tag;
+          currentTags = currentTags.filter(t => t !== tagToRemove);
+          renderTags();
+        });
+      });
+    }
+    
+    // Cancel button
+    document.getElementById('cancel').addEventListener('click', () => {
+      parent.postMessage({ pluginMessage: { type: 'close' } }, '*');
+    });
+    
+    // Search and filter functionality
+    document.getElementById('search-input').addEventListener('input', filterDecisions);
+    document.getElementById('filter-tags').addEventListener('change', filterDecisions);
+    
+    function filterDecisions() {
+      const searchText = document.getElementById('search-input').value.toLowerCase();
+      const tagFilter = document.getElementById('filter-tags').value;
+      
+      const filtered = decisions.filter(decision => {
+        // Search text filter
+        const matchesSearch = searchText === '' || 
+          decision.title.toLowerCase().includes(searchText) || 
+          decision.context.toLowerCase().includes(searchText) ||
+          decision.rationale.toLowerCase().includes(searchText);
+        
+        // Tag filter
+        const matchesTag = tagFilter === '' || 
+          (decision.tags && decision.tags.includes(tagFilter));
+        
+        return matchesSearch && matchesTag;
+      });
+      
+      renderDecisionsList(filtered);
+    }
+    
+    // Render decisions list
+    function renderDecisionsList(decisionsToRender = decisions) {
+      const container = document.getElementById('decision-list');
+      container.innerHTML = '';
+      
+      if (decisionsToRender.length === 0) {
+        container.innerHTML = '<div class="empty-state">No decisions found.</div>';
+        return;
+      }
+      
+      // Sort by timestamp (newest first)
+      decisionsToRender.sort((a, b) => b.timestamp - a.timestamp);
+      
+      decisionsToRender.forEach(decision => {
+        const card = document.createElement('div');
+        card.classList.add('decision-card');
+        
+        const date = new Date(decision.timestamp);
+        const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+        
+        card.innerHTML = `
+          <div class="decision-header">
+            <div class="decision-title">${decision.title}</div>
+          </div>
+          <div class="decision-meta">
+            By ${decision.author} on ${formattedDate}
+          </div>
+          <div class="decision-context">${decision.context}</div>
+          ${decision.tags && decision.tags.length > 0 ? 
+            `<div class="tags-container">
+              ${decision.tags.map(tag => `<div class="tag"><span>${tag}</span></div>`).join('')}
+            </div>` : ''}
+          <div class="decision-actions">
+            <button class="button secondary view-details" data-id="${decision.id}">View Details</button>
+            <button class="button secondary edit-decision" data-id="${decision.id}">Edit</button>
+            <button class="button secondary danger delete-decision" data-id="${decision.id}">Delete</button>
+          </div>
+        `;
+        
+        container.appendChild(card);
+        
+        // Add event listeners
+        card.querySelector('.view-details').addEventListener('click', () => {
+          viewDecisionDetails(decision.id);
+        });
+        
+        card.querySelector('.edit-decision').addEventListener('click', () => {
+          editDecision(decision.id);
+        });
+        
+        card.querySelector('.delete-decision').addEventListener('click', () => {
+          if (confirm('Are you sure you want to delete this decision?')) {
+            deleteDecision(decision.id);
+          }
+        });
+      });
+    }
+    
+    function viewDecisionDetails(id) {
+      // Implement detailed view of a decision
+      const decision = decisions.find(d => d.id === id);
+      if (!decision) return;
+      
+      // This is a simple implementation; you might want to create a modal for better UX
+      alert(`
+        Title: ${decision.title}
+        Context: ${decision.context}
+        Rationale: ${decision.rationale}
+        Author: ${decision.author}
+        Date: ${new Date(decision.timestamp).toLocaleString()}
+      `);
+    }
+    
+    function editDecision(id) {
+      // Load the decision data into the form and switch to the edit mode
+      const decision = decisions.find(d => d.id === id);
+      if (!decision) return;
+      
+      editingDecisionId = id;
+      document.getElementById('title').value = decision.title;
+      document.getElementById('context').value = decision.context;
+      document.getElementById('rationale').value = decision.rationale;
+      
+      // Clear existing fields
+      document.getElementById('links-container').innerHTML = '';
+      document.getElementById('pros-container').innerHTML = '';
+      document.getElementById('cons-container').innerHTML = '';
+      currentTags = [];
+      
+      // Add links
+      if (decision.links && decision.links.length > 0) {
+        decision.links.forEach(link => {
+          const container = document.getElementById('links-container');
+          const linkItem = document.createElement('div');
+          linkItem.classList.add('link-item');
+          linkItem.innerHTML = `
+            <input type="text" placeholder="Title" class="link-title" value="${link.title}">
+            <input type="text" placeholder="URL" class="link-url" value="${link.url}">
+            <button type="button" class="button secondary remove-link">✕</button>
+          `;
+          container.appendChild(linkItem);
+          
+          // Add event listener to the remove button
+          linkItem.querySelector('.remove-link').addEventListener('click', () => {
+            container.removeChild(linkItem);
+          });
+        });
+      } else {
+        // Add an empty link field
+        addLinkField();
+      }
+      
+      // Add pros
+      if (decision.pros && decision.pros.length > 0) {
+        decision.pros.forEach(pro => {
+          const container = document.getElementById('pros-container');
+          const listItem = document.createElement('div');
+          listItem.classList.add('list-item');
+          listItem.innerHTML = `
+            <input type="text" class="pro-item" value="${pro}">
+            <button type="button" class="button secondary remove-item">✕</button>
+          `;
+          container.appendChild(listItem);
+          
+          // Add event listener to the remove button
+          listItem.querySelector('.remove-item').addEventListener('click', () => {
+            container.removeChild(listItem);
+          });
+        });
+      } else {
+        // Add an empty pro field
+        addListItem('pros-container', 'pro-item');
+      }
+      
+      // Add cons
+      if (decision.cons && decision.cons.length > 0) {
+        decision.cons.forEach(con => {
+          const container = document.getElementById('cons-container');
+          const listItem = document.createElement('div');
+          listItem.classList.add('list-item');
+          listItem.innerHTML = `
+            <input type="text" class="con-item" value="${con}">
+            <button type="button" class="button secondary remove-item">✕</button>
+          `;
+          container.appendChild(listItem);
+          
+          // Add event listener to the remove button
+          listItem.querySelector('.remove-item').addEventListener('click', () => {
+            container.removeChild(listItem);
+          });
+        });
+      } else {
+        // Add an empty con field
+        addListItem('cons-container', 'con-item');
+      }
+      
+      // Add tags
+      if (decision.tags && decision.tags.length > 0) {
+        currentTags = [...decision.tags];
+        renderTags();
+      }
+      
+      // Change button text and switch to new decision tab
+      document.getElementById('save-decision').textContent = 'Update Decision';
+      switchTab('new');
+    }
+    
+    function deleteDecision(id) {
+      // Delete the decision
+      parent.postMessage({
+        pluginMessage: {
+          type: 'delete-decision',
+          id
+        }
+      }, '*');
+    }
+    
+    // Populate the tag filter dropdown
+    function populateTagFilter() {
+      const dropdown = document.getElementById('filter-tags');
+      dropdown.innerHTML = '<option value="">All tags</option>';
+      
+      const allTags = new Set();
+      decisions.forEach(decision => {
+        if (decision.tags) {
+          decision.tags.forEach(tag => allTags.add(tag));
+        }
+      });
+      
+      Array.from(allTags).sort().forEach(tag => {
+        const option = document.createElement('option');
+        option.value = tag;
+        option.textContent = tag;
+        dropdown.appendChild(option);
+      });
+    }
+    
+    // Message handler from the plugin code
+    onmessage = (event) => {
+      const message = event.data.pluginMessage;
+      
+      if (!message) return;
+      
+      switch (message.type) {
+        case 'load-decisions':
+          decisions = message.decisions || [];
+          renderDecisionsList();
+          populateTagFilter();
+          break;
+          
+        case 'decision-created':
+          decisions.push(message.decision);
+          // Reset form
+          document.getElementById('decision-form').reset();
+          document.getElementById('links-container').innerHTML = '';
+          document.getElementById('pros-container').innerHTML = '';
+          document.getElementById('cons-container').innerHTML = '';
+          currentTags = [];
+          renderTags();
+          addLinkField();
+          addListItem('pros-container', 'pro-item');
+          addListItem('cons-container', 'con-item');
+          
+          // Switch to history tab and update the list
+          switchTab('history');
+          renderDecisionsList();
+          populateTagFilter();
+          break;
+          
+        case 'decision-updated':
+          const index = decisions.findIndex(d => d.id === message.decision.id);
+          if (index !== -1) {
+            decisions[index] = message.decision;
+          }
+          // Reset edit mode
+          editingDecisionId = null;
+          document.getElementById('save-decision').textContent = 'Save Decision';
+          document.getElementById('decision-form').reset();
+          
+          // Switch to history tab and update the list
+          switchTab('history');
+          renderDecisionsList();
+          populateTagFilter();
+          break;
+          
+        case 'decision-deleted':
+          decisions = decisions.filter(d => d.id !== message.id);
+          renderDecisionsList();
+          populateTagFilter();
+          break;
+          
+        case 'user-info':
+          currentUser = {
+            name: message.name,
+            id: message.id
+          };
+          break;
+      }
+    };
+    
+    // Initialize
+    addLinkField();
+    addListItem('pros-container', 'pro-item');
+    addListItem('cons-container', 'con-item');
+  </script>
+</body>
+</html>
