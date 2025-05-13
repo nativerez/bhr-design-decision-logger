@@ -189,6 +189,12 @@
       <select id="filter-tags">
         <option value="">All tags</option>
       </select>
+      <select id="sort-decisions">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="az">A-Z</option>
+        <option value="za">Z-A</option>
+      </select>
     </div>
     <div class="decision-list" id="decision-list">
       <!-- Decision cards will be inserted here -->
@@ -504,10 +510,12 @@
     // Search and filter functionality
     document.getElementById('search-input').addEventListener('input', filterDecisions);
     document.getElementById('filter-tags').addEventListener('change', filterDecisions);
+    document.getElementById('sort-decisions').addEventListener('change', filterDecisions);
     
     function filterDecisions() {
       const searchText = document.getElementById('search-input').value.toLowerCase();
       const tagFilter = document.getElementById('filter-tags').value;
+      const sortOption = document.getElementById('sort-decisions').value;
       
       const filtered = decisions.filter(decision => {
         // Search text filter
@@ -523,11 +531,11 @@
         return matchesSearch && matchesTag;
       });
       
-      renderDecisionsList(filtered);
+      renderDecisionsList(filtered, sortOption);
     }
     
     // Render decisions list
-    function renderDecisionsList(decisionsToRender = decisions) {
+    function renderDecisionsList(decisionsToRender = decisions, sortOption = 'newest') {
       const container = document.getElementById('decision-list');
       container.innerHTML = '';
       
@@ -536,8 +544,21 @@
         return;
       }
       
-      // Sort by timestamp (newest first)
-      decisionsToRender.sort((a, b) => b.timestamp - a.timestamp);
+      // Sort decisions based on the selected sort option
+      decisionsToRender.sort((a, b) => {
+        switch (sortOption) {
+          case 'newest':
+            return b.timestamp - a.timestamp;
+          case 'oldest':
+            return a.timestamp - b.timestamp;
+          case 'az':
+            return a.title.localeCompare(b.title);
+          case 'za':
+            return b.title.localeCompare(a.title);
+          default:
+            return b.timestamp - a.timestamp;
+        }
+      });
       
       decisionsToRender.forEach(decision => {
         const card = document.createElement('div');
