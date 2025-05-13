@@ -16,8 +16,15 @@ interface Decision {
   nodeName?: string;
 }
 
-// In-memory storage for decisions (will be persisted to clientStorage)
+// In-memory storage for decisions (will be persisted to document storage)
 let decisions: Decision[] = [];
+
+// Constants for plugin storage
+const PLUGIN_NAMESPACE = 'bhrDesignDecisionLogger';
+const DECISIONS_KEY = 'designDecisions';
+
+// Track current document ID to detect file changes
+let currentDocumentId: string = figma.root.id;
 
 // Load the HTML UI
 figma.showUI(__html__, { width: 450, height: 550 });
@@ -25,18 +32,40 @@ figma.showUI(__html__, { width: 450, height: 550 });
 // Load saved decisions when plugin starts
 async function initializePlugin() {
   try {
-    const savedDecisions = await figma.clientStorage.getAsync('designDecisions');
+    // Update current document ID
+    currentDocumentId = figma.root.id;
+    
+    // Load from document storage instead of client storage
+    const savedDecisions = figma.root.getSharedPluginData(PLUGIN_NAMESPACE, DECISIONS_KEY);
     if (savedDecisions) {
       decisions = JSON.parse(savedDecisions);
       figma.ui.postMessage({ type: 'load-decisions', decisions });
+    } else {
+      // Clear decisions if none exist in this document
+      decisions = [];
+      figma.ui.postMessage({ type: 'load-decisions', decisions: [] });
     }
   } catch (error) {
     console.error('Error loading saved decisions:', error);
     figma.notify('Error loading saved decisions');
+    // Reset decisions array to be safe
+    decisions = [];
+    figma.ui.postMessage({ type: 'load-decisions', decisions: [] });
   }
 
   // Send current selection info to UI
   sendSelectionInfo();
+}
+
+// Function to save decisions to document storage
+function saveDecisionsToDocument() {
+  try {
+    figma.root.setSharedPluginData(PLUGIN_NAMESPACE, DECISIONS_KEY, JSON.stringify(decisions));
+    return true;
+  } catch (error) {
+    console.error('Error saving to document storage:', error);
+    return false;
+  }
 }
 
 // Send information about the currently selected node to the UI
@@ -64,16 +93,35 @@ function sendSelectionInfo() {
   }
 }
 
+// Check if we've switched to a different document and reload decisions if needed
+function checkForDocumentChange() {
+  if (currentDocumentId !== figma.root.id) {
+    console.log('Document changed, reloading decisions');
+    initializePlugin();
+  }
+}
+
 // Initialize the plugin
 initializePlugin();
 
 // Handle selection changes
 figma.on('selectionchange', () => {
+  // Check if document has changed
+  checkForDocumentChange();
+  // Then handle selection as usual
   sendSelectionInfo();
+});
+
+// Monitor document changes (runs when the plugin UI gains focus)
+figma.ui.on('message', () => {
+  checkForDocumentChange();
 });
 
 // Handle messages from the UI
 figma.ui.onmessage = async (msg) => {
+  // Check for document change on each message from UI
+  checkForDocumentChange();
+  
   switch (msg.type) {
     case 'create-decision': {
       // Create a new decision with a unique ID
@@ -94,13 +142,11 @@ figma.ui.onmessage = async (msg) => {
       
       // Add to our list and save
       decisions.push(newDecision);
-      try {
-        await figma.clientStorage.setAsync('designDecisions', JSON.stringify(decisions));
+      if (saveDecisionsToDocument()) {
         figma.ui.postMessage({ type: 'decision-created', decision: newDecision });
         figma.notify('Decision logged successfully');
-      } catch (error) {
+      } else {
         figma.notify('Error saving decision');
-        console.error('Error saving decision:', error);
       }
       break;
     }
@@ -114,13 +160,11 @@ figma.ui.onmessage = async (msg) => {
           timestamp: Date.now() // Update timestamp on edit
         };
         
-        try {
-          await figma.clientStorage.setAsync('designDecisions', JSON.stringify(decisions));
+        if (saveDecisionsToDocument()) {
           figma.ui.postMessage({ type: 'decision-updated', decision: decisions[index] });
           figma.notify('Decision updated successfully');
-        } catch (error) {
+        } else {
           figma.notify('Error updating decision');
-          console.error('Error updating decision:', error);
         }
       }
       break;
@@ -129,13 +173,11 @@ figma.ui.onmessage = async (msg) => {
     case 'delete-decision': {
       // Remove the decision
       decisions = decisions.filter(d => d.id !== msg.id);
-      try {
-        await figma.clientStorage.setAsync('designDecisions', JSON.stringify(decisions));
+      if (saveDecisionsToDocument()) {
         figma.ui.postMessage({ type: 'decision-deleted', id: msg.id });
         figma.notify('Decision deleted successfully');
-      } catch (error) {
+      } else {
         figma.notify('Error deleting decision');
-        console.error('Error deleting decision:', error);
       }
       break;
     }
