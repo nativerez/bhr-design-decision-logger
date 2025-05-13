@@ -131,7 +131,8 @@
       border: 1px solid #e5e5e5;
     }
     .button.danger {
-      background: #ff5252;
+      background: transparent;
+      color: #ff5252
     }
     .decision-list {
       margin-top: 12px;
@@ -267,6 +268,7 @@
           <div id="no-selection" style="color: #888; font-style: italic;">No element selected. Select a Figma element before creating a decision to link it.</div>
           <div id="node-selection" style="display: none;">
             <div class="tag" style="background-color: #E9F5FF; color: #007ACC;">
+              <span id="node-page" style="color: #888; margin-right: 5px; font-size: 11px;"></span>
               <span id="node-name">Element name</span>
             </div>
           </div>
@@ -376,7 +378,8 @@
             cons,
             tags: currentTags,
             nodeId: selectedNodeId,
-            nodeName: selectedNodeName
+            nodeName: selectedNodeName,
+            pageName: selectedPageName // Include page name when creating a decision
           }
         }, '*');
       }
@@ -549,7 +552,7 @@
           figmaNodeSection = `
             <div class="figma-node-link" style="margin-top: 8px;">
               <div class="tag" style="background-color: #E9F5FF; color: #007ACC; display: inline-flex; cursor: pointer;" data-node-id="${decision.nodeId}">
-                <span class="material-icons" style="font-size: 12px; margin-right: 4px;">link</span>
+                ${decision.pageName ? `<span style="color: #888; margin-right: 5px; font-size: 11px;">${decision.pageName}</span>` : ''}
                 <span>${decision.nodeName}</span>
               </div>
             </div>`;
@@ -597,20 +600,21 @@
         if (figmaNodeLink) {
           figmaNodeLink.addEventListener('click', () => {
             const nodeId = figmaNodeLink.dataset.nodeId;
-            navigateToNode(nodeId);
+            navigateToNode(nodeId, decision.pageName);
           });
         }
       });
     }
     
     // Function to navigate to a Figma node
-    function navigateToNode(nodeId) {
+    function navigateToNode(nodeId, pageName) {
       if (!nodeId) return;
       
       parent.postMessage({
         pluginMessage: {
           type: 'navigate-to-node',
-          nodeId
+          nodeId,
+          pageName
         }
       }, '*');
     }
@@ -637,7 +641,7 @@
       // If there's a linked node, ask if the user wants to navigate to it
       if (decision.nodeId && decision.nodeName) {
         if (confirm(`Do you want to navigate to the linked element "${decision.nodeName}"?`)) {
-          navigateToNode(decision.nodeId);
+          navigateToNode(decision.nodeId, decision.pageName);
         }
       }
     }
@@ -800,6 +804,7 @@
           // Update the UI to show the currently selected node
           selectedNodeId = message.nodeId;
           selectedNodeName = message.nodeName;
+          selectedPageName = message.pageName;
           
           const noSelectionElement = document.getElementById('no-selection');
           const nodeSelectionElement = document.getElementById('node-selection');
@@ -809,6 +814,7 @@
             noSelectionElement.style.display = 'none';
             nodeSelectionElement.style.display = 'block';
             document.getElementById('node-name').textContent = selectedNodeName;
+            document.getElementById('node-page').textContent = selectedPageName || '';
           } else {
             // Show the "no selection" message
             noSelectionElement.style.display = 'block';

@@ -14,6 +14,7 @@ interface Decision {
   tags?: string[];
   nodeId?: string;
   nodeName?: string;
+  pageName?: string; // Adding pageName property
 }
 
 // In-memory storage for decisions (will be persisted to document storage)
@@ -76,19 +77,22 @@ function sendSelectionInfo() {
     figma.ui.postMessage({
       type: 'selection-info',
       nodeId: selectedNode.id,
-      nodeName: selectedNode.name
+      nodeName: selectedNode.name,
+      pageName: figma.currentPage.name // Adding the page name
     });
   } else if (selection.length > 1) {
     figma.ui.postMessage({
       type: 'selection-info',
       nodeId: null,
-      nodeName: `Multiple items (${selection.length})`
+      nodeName: `Multiple items (${selection.length})`,
+      pageName: figma.currentPage.name // Adding the page name
     });
   } else {
     figma.ui.postMessage({
       type: 'selection-info',
       nodeId: null,
-      nodeName: null
+      nodeName: null,
+      pageName: null
     });
   }
 }
@@ -137,7 +141,8 @@ figma.ui.onmessage = async (msg) => {
         cons: msg.cons || [],
         tags: msg.tags || [],
         nodeId: msg.nodeId,
-        nodeName: msg.nodeName
+        nodeName: msg.nodeName,
+        pageName: msg.pageName // Store the page name
       };
       
       // Add to our list and save
@@ -194,30 +199,54 @@ figma.ui.onmessage = async (msg) => {
     
     case 'navigate-to-node': {
       const nodeId = msg.nodeId;
+      const pageName = msg.pageName;
+      
       if (nodeId) {
         try {
+          // Find the node first
           const node = await figma.getNodeByIdAsync(nodeId);
-          if (node && node.type !== 'DOCUMENT' && node.type !== 'PAGE') {
-            // Only scene nodes (like layers) can be selected - not pages or the document
-            const sceneNode = node as SceneNode;
+          
+          if (node) {
+            // Find the page that contains this node - traverse up the tree
+            let currentNode = node;
+            let targetPage = null;
             
-            // Select the node first
-            figma.currentPage.selection = [sceneNode];
+            while (currentNode && currentNode.parent) {
+              if (currentNode.parent.type === "PAGE") {
+                targetPage = currentNode.parent;
+                break;
+              }
+              currentNode = currentNode.parent;
+            }
             
-            // Get node's absolute position in the canvas
-            // Wait a moment to ensure the node is properly selected before centering
-            setTimeout(() => {
-              // First reset the zoom level to ensure consistency
-              figma.viewport.zoom = 0.5;
+            if (targetPage) {
+              // Switch to the correct page first using the async version
+              await figma.setCurrentPageAsync(targetPage as PageNode);
               
-              // Center viewport on the node
-              figma.viewport.scrollAndZoomIntoView([sceneNode]);
-              
-              // Notify success
-              figma.notify('Navigated to linked element');
-            }, 100);
+              // Wait a moment for the page switch to take effect
+              setTimeout(() => {
+                // Only scene nodes can be selected
+                if (node && node.type !== 'DOCUMENT' && node.type !== 'PAGE') {
+                  const sceneNode = node as SceneNode;
+                  
+                  // Select the node
+                  figma.currentPage.selection = [sceneNode];
+                  
+                  // Reset zoom level for consistency
+                  figma.viewport.zoom = 0.5;
+                  
+                  // Center viewport on the node
+                  figma.viewport.scrollAndZoomIntoView([sceneNode]);
+                  
+                  // Notify success
+                  figma.notify(`Navigated to linked element on page "${targetPage.name}"`);
+                }
+              }, 200);
+            } else {
+              figma.notify('Could not find the page containing this element', { error: true });
+            }
           } else {
-            figma.notify('Could not find the linked element or it cannot be selected', { error: true });
+            figma.notify('Could not find the linked element', { error: true });
           }
         } catch (error) {
           console.error('Error navigating to node:', error);
