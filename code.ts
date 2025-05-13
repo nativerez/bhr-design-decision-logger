@@ -162,7 +162,8 @@ figma.ui.onmessage = async (msg) => {
       if (index !== -1) {
         decisions[index] = {
           ...msg.decision,
-          timestamp: Date.now() // Update timestamp on edit
+          timestamp: Date.now(), // Update timestamp on edit
+          author: decisions[index].author // Preserve the original author
         };
         
         if (saveDecisionsToDocument()) {
