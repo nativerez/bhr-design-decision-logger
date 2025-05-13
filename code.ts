@@ -209,11 +209,11 @@ figma.ui.onmessage = async (msg) => {
           if (node) {
             // Find the page that contains this node - traverse up the tree
             let currentNode = node;
-            let targetPage = null;
+            let targetPage: PageNode | null = null;
             
             while (currentNode && currentNode.parent) {
               if (currentNode.parent.type === "PAGE") {
-                targetPage = currentNode.parent;
+                targetPage = currentNode.parent as PageNode;
                 break;
               }
               currentNode = currentNode.parent;
@@ -221,7 +221,7 @@ figma.ui.onmessage = async (msg) => {
             
             if (targetPage) {
               // Switch to the correct page first using the async version
-              await figma.setCurrentPageAsync(targetPage as PageNode);
+              await figma.setCurrentPageAsync(targetPage);
               
               // Wait a moment for the page switch to take effect
               setTimeout(() => {
@@ -238,7 +238,7 @@ figma.ui.onmessage = async (msg) => {
                   // Center viewport on the node
                   figma.viewport.scrollAndZoomIntoView([sceneNode]);
                   
-                  // Notify success
+                  // Notify success - we know targetPage is not null at this point
                   figma.notify(`Navigated to linked element on page "${targetPage.name}"`);
                 }
               }, 200);
