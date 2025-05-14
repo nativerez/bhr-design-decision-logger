@@ -912,6 +912,13 @@
       // Set basic info
       document.getElementById('detail-title').textContent = decision.title;
       
+      // Set status with proper styling
+      const statusElement = document.getElementById('detail-status');
+      const statusText = decision.status || 'Proposed';
+      const statusClass = `status-${statusText.toLowerCase()}`;
+      statusElement.textContent = statusText;
+      statusElement.className = 'status-badge ' + statusClass;
+      
       // Format date
       const date = new Date(decision.timestamp);
       const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
