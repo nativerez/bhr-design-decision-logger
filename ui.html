@@ -839,7 +839,7 @@
         card.innerHTML = `
           <div class="decision-header">
             <div class="decision-title">${decision.title}</div>
-            <div class="status-badge status-${decision.status.toLowerCase()}">${decision.status}</div>
+            <div class="status-badge status-${(decision.status || 'proposed').toLowerCase()}">${decision.status || 'Proposed'}</div>
           </div>
           <div class="decision-meta">
             By ${decision.author} on ${formattedDate}
