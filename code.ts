@@ -15,6 +15,7 @@ interface Decision {
   nodeId?: string;
   nodeName?: string;
   pageName?: string; // Adding pageName property
+  status: 'proposed' | 'accepted' | 'rejected' | 'deprecated' | 'superseded'; // Adding status property
 }
 
 // In-memory storage for decisions (will be persisted to document storage)
@@ -142,7 +143,8 @@ figma.ui.onmessage = async (msg) => {
         tags: msg.tags || [],
         nodeId: msg.nodeId,
         nodeName: msg.nodeName,
-        pageName: msg.pageName // Store the page name
+        pageName: msg.pageName, // Store the page name
+        status: msg.status || 'proposed' // Default to 'proposed' if not specified
       };
       
       // Add to our list and save

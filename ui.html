@@ -151,6 +151,7 @@
       margin-bottom: 16px;
       background-color: #fff;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      position: relative;
     }
     .decision-header {
       display: flex;
@@ -160,6 +161,7 @@
     .decision-title {
       font-weight: 600;
       font-size: 16px;
+      padding-right: 75px; /* Make room for the status badge */
     }
     .decision-meta {
       font-size: 12px;
@@ -300,6 +302,36 @@
       margin-top: 20px;
       justify-content: flex-end;
     }
+    .status-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+    .status-proposed {
+      background-color: #E3F2FD;
+      color: #0D47A1;
+    }
+    .status-accepted {
+      background-color: #E8F5E9;
+      color: #1B5E20;
+    }
+    .status-rejected {
+      background-color: #FFEBEE;
+      color: #B71C1C;
+    }
+    .status-deprecated {
+      background-color: #EFEBE9;
+      color: #3E2723;
+    }
+    .status-superseded {
+      background-color: #F3E5F5;
+      color: #4A148C;
+    }
   </style>
 </head>
 <body>
@@ -314,6 +346,14 @@
       <input type="text" id="search-input" placeholder="Search decisions...">
       <select id="filter-tags">
         <option value="">All tags</option>
+      </select>
+      <select id="filter-status">
+        <option value="">All statuses</option>
+        <option value="proposed">Proposed</option>
+        <option value="accepted">Accepted</option>
+        <option value="rejected">Rejected</option>
+        <option value="deprecated">Deprecated</option>
+        <option value="superseded">Superseded</option>
       </select>
       <select id="sort-decisions">
         <option value="newest">Newest First</option>
@@ -352,6 +392,16 @@
       <div class="form-group">
         <label for="context">Context</label>
         <textarea id="context" placeholder="What is the background for this decision?" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select id="status" required>
+          <option value="proposed">Proposed</option>
+          <option value="accepted">Accepted</option>
+          <option value="rejected">Rejected</option>
+          <option value="deprecated">Deprecated</option>
+          <option value="superseded">Superseded</option>
+        </select>
       </div>
       <div class="form-group">
         <label for="rationale">Rationale</label>
@@ -423,6 +473,7 @@
   <div id="decision-detail-panel" class="decision-detail-panel">
     <div class="detail-header">
       <div class="detail-title" id="detail-title">Decision Title</div>
+      <div class="status-badge" id="detail-status">Status</div>
       <button class="detail-close" id="detail-close">✕</button>
     </div>
     <div class="detail-meta">
@@ -518,6 +569,7 @@
       const title = document.getElementById('title').value;
       const context = document.getElementById('context').value;
       const rationale = document.getElementById('rationale').value;
+      const status = document.getElementById('status').value;
       
       // Gather links
       const links = [];
@@ -562,7 +614,8 @@
               tags: currentTags,
               nodeId: selectedNodeId,
               nodeName: selectedNodeName,
-              pageName: selectedPageName
+              pageName: selectedPageName,
+              status // Include status when editing a decision
             }
           }
         }, '*');
@@ -580,7 +633,8 @@
             tags: currentTags,
             nodeId: selectedNodeId,
             nodeName: selectedNodeName,
-            pageName: selectedPageName // Include page name when creating a decision
+            pageName: selectedPageName, // Include page name when creating a decision
+            status // Include status when creating a decision
           }
         }, '*');
       }
@@ -705,11 +759,13 @@
     // Search and filter functionality
     document.getElementById('search-input').addEventListener('input', filterDecisions);
     document.getElementById('filter-tags').addEventListener('change', filterDecisions);
+    document.getElementById('filter-status').addEventListener('change', filterDecisions);
     document.getElementById('sort-decisions').addEventListener('change', filterDecisions);
     
     function filterDecisions() {
       const searchText = document.getElementById('search-input').value.toLowerCase();
       const tagFilter = document.getElementById('filter-tags').value;
+      const statusFilter = document.getElementById('filter-status').value;
       const sortOption = document.getElementById('sort-decisions').value;
       
       const filtered = decisions.filter(decision => {
@@ -723,7 +779,10 @@
         const matchesTag = tagFilter === '' || 
           (decision.tags && decision.tags.includes(tagFilter));
         
-        return matchesSearch && matchesTag;
+        // Status filter
+        const matchesStatus = statusFilter === '' || decision.status === statusFilter;
+        
+        return matchesSearch && matchesTag && matchesStatus;
       });
       
       renderDecisionsList(filtered, sortOption);
@@ -780,6 +839,7 @@
         card.innerHTML = `
           <div class="decision-header">
             <div class="decision-title">${decision.title}</div>
+            <div class="status-badge status-${decision.status.toLowerCase()}">${decision.status}</div>
           </div>
           <div class="decision-meta">
             By ${decision.author} on ${formattedDate}
@@ -992,6 +1052,7 @@
       document.getElementById('title').value = decision.title;
       document.getElementById('context').value = decision.context;
       document.getElementById('rationale').value = decision.rationale;
+      document.getElementById('status').value = decision.status;
       
       // Set selected node info
       selectedNodeId = decision.nodeId || null;
