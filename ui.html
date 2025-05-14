@@ -174,6 +174,106 @@
       flex: 1;
       min-width: 0; /* Prevents flex items from overflowing */
     }
+    
+    /* New styles for detail panel */
+    .decision-detail-panel {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 100%;
+      height: 100%;
+      background: white;
+      z-index: 10;
+      padding: 16px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      transition: right 0.3s ease;
+      overflow-y: auto;
+    }
+    .decision-detail-panel.active {
+      right: 0;
+    }
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    .detail-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .detail-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .detail-section {
+      margin-bottom: 16px;
+    }
+    .detail-section-title {
+      font-weight: 500;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: #666;
+    }
+    .detail-section-content {
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .detail-meta {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      color: #888;
+    }
+    .detail-links {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .detail-link {
+      display: block;
+      color: #18a0fb;
+      text-decoration: none;
+    }
+    .detail-pros-cons {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .detail-pros, .detail-cons {
+      flex: 1;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .detail-pros {
+      background-color: #f2fbf2;
+    }
+    .detail-cons {
+      background-color: #fff0f0;
+    }
+    .detail-list-title {
+      font-weight: 500;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .detail-list {
+      list-style-position: inside;
+      padding-left: 4px;
+    }
+    .detail-list li {
+      margin-bottom: 4px;
+    }
+    .detail-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      justify-content: flex-end;
+    }
   </style>
 </head>
 <body>
@@ -292,6 +392,72 @@
   <div id="edit-modal" style="display: none;">
     <!-- Edit form will be similar to new decision form -->
   </div>
+  
+  <!-- Decision Detail Panel (hidden by default) -->
+  <div id="decision-detail-panel" class="decision-detail-panel">
+    <div class="detail-header">
+      <div class="detail-title" id="detail-title">Decision Title</div>
+      <button class="detail-close" id="detail-close">✕</button>
+    </div>
+    <div class="detail-meta">
+      <div id="detail-author">By Author</div>
+      <div id="detail-date">On Date</div>
+    </div>
+    
+    <div class="detail-section">
+      <div class="detail-section-title">Context</div>
+      <div class="detail-section-content" id="detail-context">Context content will go here</div>
+    </div>
+    
+    <div class="detail-section">
+      <div class="detail-section-title">Rationale</div>
+      <div class="detail-section-content" id="detail-rationale">Rationale content will go here</div>
+    </div>
+    
+    <div id="detail-links-section" class="detail-section" style="display: none;">
+      <div class="detail-section-title">Links & References</div>
+      <div class="detail-links" id="detail-links">
+        <!-- Links will be inserted here -->
+      </div>
+    </div>
+    
+    <div id="detail-pros-cons-section" class="detail-section" style="display: none;">
+      <div class="detail-section-title">Pros & Cons</div>
+      <div class="detail-pros-cons">
+        <div class="detail-pros">
+          <div class="detail-list-title">Pros</div>
+          <ul class="detail-list" id="detail-pros">
+            <!-- Pros will be inserted here -->
+          </ul>
+        </div>
+        <div class="detail-cons">
+          <div class="detail-list-title">Cons</div>
+          <ul class="detail-list" id="detail-cons">
+            <!-- Cons will be inserted here -->
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div id="detail-tags-section" class="detail-section" style="display: none;">
+      <div class="detail-section-title">Tags</div>
+      <div class="tags-container" id="detail-tags">
+        <!-- Tags will be inserted here -->
+      </div>
+    </div>
+    
+    <div id="detail-node-section" class="detail-section" style="display: none;">
+      <div class="detail-section-title">Linked Figma Element</div>
+      <div id="detail-node-info">
+        <!-- Node info will be inserted here -->
+      </div>
+    </div>
+    
+    <div class="detail-actions">
+      <button class="button secondary" id="detail-edit-button">Edit Decision</button>
+      <button class="button secondary danger" id="detail-delete-button">Delete</button>
+    </div>
+  </div>
 
   <script>
     // Global variables
@@ -301,6 +467,8 @@
     let currentTags = [];
     let selectedNodeId = null;
     let selectedNodeName = null;
+    let selectedPageName = null;
+    let currentDetailDecisionId = null;
     
     // Get current user info
     parent.postMessage({ pluginMessage: { type: 'get-user-info' } }, '*');
@@ -367,7 +535,8 @@
               cons,
               tags: currentTags,
               nodeId: selectedNodeId,
-              nodeName: selectedNodeName
+              nodeName: selectedNodeName,
+              pageName: selectedPageName
             }
           }
         }, '*');
@@ -640,31 +809,146 @@
       }, '*');
     }
     
+    // Function to show the detail panel
     function viewDecisionDetails(id) {
-      // Implement detailed view of a decision
+      // Find the decision with the given ID
       const decision = decisions.find(d => d.id === id);
       if (!decision) return;
       
-      // Include node information in the details if it exists
-      const nodeInfo = (decision.nodeId && decision.nodeName) ? 
-        `\nLinked Element: ${decision.nodeName}` : 
-        '\nNo linked Figma element';
+      currentDetailDecisionId = id;
       
-      // This is a simple implementation; you might want to create a modal for better UX
-      alert(`
-        Title: ${decision.title}
-        Context: ${decision.context}
-        Rationale: ${decision.rationale}
-        Author: ${decision.author}
-        Date: ${new Date(decision.timestamp).toLocaleString()}${nodeInfo}
-      `);
+      // Set details in the panel
+      const detailPanel = document.getElementById('decision-detail-panel');
       
-      // If there's a linked node, ask if the user wants to navigate to it
-      if (decision.nodeId && decision.nodeName) {
-        if (confirm(`Do you want to navigate to the linked element "${decision.nodeName}"?`)) {
-          navigateToNode(decision.nodeId, decision.pageName);
-        }
+      // Set basic info
+      document.getElementById('detail-title').textContent = decision.title;
+      
+      // Format date
+      const date = new Date(decision.timestamp);
+      const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+      
+      document.getElementById('detail-author').textContent = `By ${decision.author}`;
+      document.getElementById('detail-date').textContent = `On ${formattedDate}`;
+      
+      // Set content
+      document.getElementById('detail-context').textContent = decision.context;
+      document.getElementById('detail-rationale').textContent = decision.rationale;
+      
+      // Handle links section
+      const linksSection = document.getElementById('detail-links-section');
+      const linksContainer = document.getElementById('detail-links');
+      
+      if (decision.links && decision.links.length > 0) {
+        linksSection.style.display = 'block';
+        linksContainer.innerHTML = '';
+        
+        decision.links.forEach(link => {
+          const linkElement = document.createElement('a');
+          linkElement.classList.add('detail-link');
+          linkElement.href = link.url;
+          linkElement.target = '_blank';
+          linkElement.textContent = link.title;
+          linksContainer.appendChild(linkElement);
+        });
+      } else {
+        linksSection.style.display = 'none';
       }
+      
+      // Handle pros and cons section
+      const prosConsSection = document.getElementById('detail-pros-cons-section');
+      const prosList = document.getElementById('detail-pros');
+      const consList = document.getElementById('detail-cons');
+      
+      if ((decision.pros && decision.pros.length > 0) || (decision.cons && decision.cons.length > 0)) {
+        prosConsSection.style.display = 'block';
+        
+        // Populate pros
+        prosList.innerHTML = '';
+        if (decision.pros && decision.pros.length > 0) {
+          decision.pros.forEach(pro => {
+            const li = document.createElement('li');
+            li.textContent = pro;
+            prosList.appendChild(li);
+          });
+        } else {
+          prosList.innerHTML = '<li style="font-style: italic; color: #888;">None specified</li>';
+        }
+        
+        // Populate cons
+        consList.innerHTML = '';
+        if (decision.cons && decision.cons.length > 0) {
+          decision.cons.forEach(con => {
+            const li = document.createElement('li');
+            li.textContent = con;
+            consList.appendChild(li);
+          });
+        } else {
+          consList.innerHTML = '<li style="font-style: italic; color: #888;">None specified</li>';
+        }
+      } else {
+        prosConsSection.style.display = 'none';
+      }
+      
+      // Handle tags section
+      const tagsSection = document.getElementById('detail-tags-section');
+      const tagsContainer = document.getElementById('detail-tags');
+      
+      if (decision.tags && decision.tags.length > 0) {
+        tagsSection.style.display = 'block';
+        tagsContainer.innerHTML = '';
+        
+        decision.tags.forEach(tag => {
+          const tagElement = document.createElement('div');
+          tagElement.classList.add('tag');
+          tagElement.innerHTML = `<span>${tag}</span>`;
+          tagsContainer.appendChild(tagElement);
+        });
+      } else {
+        tagsSection.style.display = 'none';
+      }
+      
+      // Handle linked node section
+      const nodeSection = document.getElementById('detail-node-section');
+      const nodeContainer = document.getElementById('detail-node-info');
+      
+      if (decision.nodeId && decision.nodeName) {
+        nodeSection.style.display = 'block';
+        nodeContainer.innerHTML = `
+          <div class="tag" style="background-color: #E9F5FF; color: #007ACC; display: inline-flex; cursor: pointer;" data-node-id="${decision.nodeId}">
+            ${decision.pageName ? `<span style="color: #888; margin-right: 5px; font-size: 11px;">${decision.pageName}</span>` : ''}
+            <span>${decision.nodeName}</span>
+          </div>
+        `;
+        
+        // Add click event to the node tag
+        nodeContainer.querySelector('.tag').addEventListener('click', () => {
+          navigateToNode(decision.nodeId, decision.pageName);
+        });
+      } else {
+        nodeSection.style.display = 'none';
+      }
+      
+      // Set up action buttons
+      document.getElementById('detail-edit-button').addEventListener('click', () => {
+        detailPanel.classList.remove('active');
+        editDecision(decision.id);
+      });
+      
+      document.getElementById('detail-delete-button').addEventListener('click', () => {
+        if (confirm('Are you sure you want to delete this decision?')) {
+          detailPanel.classList.remove('active');
+          deleteDecision(decision.id);
+        }
+      });
+      
+      // Set up close button
+      document.getElementById('detail-close').addEventListener('click', () => {
+        detailPanel.classList.remove('active');
+        currentDetailDecisionId = null;
+      });
+      
+      // Show the panel with animation
+      detailPanel.classList.add('active');
     }
     
     function editDecision(id) {
@@ -680,6 +964,7 @@
       // Set selected node info
       selectedNodeId = decision.nodeId || null;
       selectedNodeName = decision.nodeName || null;
+      selectedPageName = decision.pageName || null;
       
       // Update the node info display in the form
       const noSelectionElement = document.getElementById('no-selection');
@@ -689,6 +974,7 @@
         noSelectionElement.style.display = 'none';
         nodeSelectionElement.style.display = 'block';
         document.getElementById('node-name').textContent = selectedNodeName;
+        document.getElementById('node-page').textContent = selectedPageName || '';
       } else {
         noSelectionElement.style.display = 'block';
         nodeSelectionElement.style.display = 'none';
@@ -866,6 +1152,11 @@
           const index = decisions.findIndex(d => d.id === message.decision.id);
           if (index !== -1) {
             decisions[index] = message.decision;
+            
+            // If the detail panel is showing this decision, update it
+            if (currentDetailDecisionId === message.decision.id) {
+              viewDecisionDetails(message.decision.id);
+            }
           }
           // Reset edit mode
           editingDecisionId = null;
@@ -880,6 +1171,13 @@
           
         case 'decision-deleted':
           decisions = decisions.filter(d => d.id !== message.id);
+          
+          // If the detail panel is showing this decision, close it
+          if (currentDetailDecisionId === message.id) {
+            document.getElementById('decision-detail-panel').classList.remove('active');
+            currentDetailDecisionId = null;
+          }
+          
           renderDecisionsList();
           populateTagFilter();
           break;
