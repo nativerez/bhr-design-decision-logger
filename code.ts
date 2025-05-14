@@ -28,7 +28,7 @@ const DECISIONS_KEY = 'designDecisions';
 let currentDocumentId: string = figma.root.id;
 
 // Load the HTML UI
-figma.showUI(__html__, { width: 450, height: 550 });
+figma.showUI(__html__, { width: 640, height: 840 });
 
 // Load saved decisions when plugin starts
 async function initializePlugin() {
@@ -200,7 +200,7 @@ figma.ui.onmessage = async (msg) => {
     
     case 'navigate-to-node': {
       const nodeId = msg.nodeId;
-      const pageName = msg.pageName;
+      const _pageName = msg.pageName;
       
       if (nodeId) {
         try {
