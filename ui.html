@@ -305,6 +305,20 @@
   <!-- New Decision Tab -->
   <div id="content-new" class="tab-content">
     <form id="decision-form">
+      <!-- Figma Element Section -->
+      <div class="section">
+        <h3>Linked Figma Element</h3>
+        <div id="figma-node-info" class="figma-node-info">
+          <div id="no-selection" style="color: #888; font-style: italic;">No element selected. Select a Figma element before creating a decision to link it.</div>
+          <div id="node-selection" style="display: none;">
+            <div class="tag" style="background-color: #E9F5FF; color: #007ACC;">
+              <span id="node-page" style="color: #888; margin-right: 5px; font-size: 11px;"></span>
+              <span id="node-name">Element name</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <div class="form-group">
         <label for="title">Decision Title</label>
         <input type="text" id="title" placeholder="What is the decision about?" required>
@@ -364,20 +378,6 @@
         <input type="text" id="tag-input" placeholder="Add tags (comma separated)">
         <div class="tags-container" id="tags-container">
           <!-- Tags will be inserted here -->
-        </div>
-      </div>
-      
-      <!-- Figma Element Section -->
-      <div class="section">
-        <h3>Linked Figma Element</h3>
-        <div id="figma-node-info" class="figma-node-info">
-          <div id="no-selection" style="color: #888; font-style: italic;">No element selected. Select a Figma element before creating a decision to link it.</div>
-          <div id="node-selection" style="display: none;">
-            <div class="tag" style="background-color: #E9F5FF; color: #007ACC;">
-              <span id="node-page" style="color: #888; margin-right: 5px; font-size: 11px;"></span>
-              <span id="node-name">Element name</span>
-            </div>
-          </div>
         </div>
       </div>
       
