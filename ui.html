@@ -765,10 +765,13 @@
         // Prepare the Figma node link section if it exists
         let figmaNodeSection = '';
         if (decision.nodeId && decision.nodeName) {
+          const pageNameDisplay = decision.pageName ? 
+            `<span style="color: #888; margin-right: 5px; font-size: 11px; display: inline-block;">${decision.pageName}</span>` : '';
+            
           figmaNodeSection = `
             <div class="figma-node-link" style="margin-top: 8px;">
-              <div class="tag" style="background-color: #E9F5FF; color: #007ACC; display: inline-flex; cursor: pointer;" data-node-id="${decision.nodeId}">
-                ${decision.pageName ? `<span style="color: #888; margin-right: 5px; font-size: 11px;">${decision.pageName}</span>` : ''}
+              <div class="tag" style="background-color: #E9F5FF; color: #007ACC; display: inline-flex; cursor: pointer;" data-node-id="${decision.nodeId}" data-page-name="${decision.pageName || ''}">
+                ${pageNameDisplay}
                 <span>${decision.nodeName}</span>
               </div>
             </div>`;
@@ -939,9 +942,12 @@
       
       if (decision.nodeId && decision.nodeName) {
         nodeSection.style.display = 'block';
+        const pageNameDisplay = decision.pageName ? 
+          `<span style="color: #888; margin-right: 5px; font-size: 11px; display: inline-block;">${decision.pageName}</span>` : '';
+          
         nodeContainer.innerHTML = `
           <div class="tag" style="background-color: #E9F5FF; color: #007ACC; display: inline-flex; cursor: pointer;" data-node-id="${decision.nodeId}">
-            ${decision.pageName ? `<span style="color: #888; margin-right: 5px; font-size: 11px;">${decision.pageName}</span>` : ''}
+            ${pageNameDisplay}
             <span>${decision.nodeName}</span>
           </div>
         `;
