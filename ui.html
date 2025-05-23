@@ -43,6 +43,7 @@
       border-bottom: 2px solid #18a0fb;
       color: #18a0fb;
     }
+    /* These classes are kept for backward compatibility */
     .tab-content {
       display: none;
     }
@@ -221,13 +222,14 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #e5e5e5;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #eee;
     }
     .detail-title {
-      font-size: 20px;
       font-weight: 600;
+      font-size: 20px;
+      color: #333;
       flex: 1;
     }
     .detail-close {
@@ -339,16 +341,79 @@
       background-color: #F3E5F5;
       color: #4A148C;
     }
+    
+    /* New action button style */
+    .action-button {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: #18a0fb;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      z-index: 100;
+      transition: all 0.2s ease;
+      font-size: 24px;
+      border: none;
+    }
+    
+    .action-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Decision form panel style */
+    .decision-form-panel {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 100%;
+      height: 100%;
+      background: white;
+      z-index: 10;
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      transition: right 0.3s ease;
+      overflow-y: auto;
+    }
+    
+    .decision-form-panel.active {
+      right: 0;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e5e5e5;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+    }
+    
+    .header-title {
+      font-weight: 600;
+      font-size: 18px;
+      color: #333;
+    }
+    
+    .content-main {
+      display: block;
+    }
   </style>
 </head>
 <body>
-  <div class="tab-container">
-    <div id="tab-history" class="tab active">📋 Decision History</div>
-    <div id="tab-new" class="tab">✏️ New Decision</div>
+  <div class="header">
+    <div class="header-title">📋 Decision History</div>
   </div>
 
-  <!-- Decision History Tab -->
-  <div id="content-history" class="tab-content active">
+  <!-- Decision History -->
+  <div id="content-history" class="content-main">
     <div class="filter-bar">
       <input type="text" id="search-input" placeholder="Search decisions...">
       <select id="filter-tags">
@@ -375,8 +440,16 @@
     </div>
   </div>
 
-  <!-- New Decision Tab -->
-  <div id="content-new" class="tab-content">
+  <!-- New Decision Action Button -->
+  <button id="new-decision-btn" class="action-button">+</button>
+
+  <!-- Decision Form Panel (initially hidden) -->
+  <div id="decision-form-panel" class="decision-form-panel">
+    <div class="detail-header">
+      <div class="detail-title" id="form-title">New Decision</div>
+      <button class="detail-close" id="form-close">✕</button>
+    </div>
+    
     <form id="decision-form">
       <!-- Figma Element Section -->
       <div class="section">
@@ -557,16 +630,44 @@
     // Get current user info
     parent.postMessage({ pluginMessage: { type: 'get-user-info' } }, '*');
 
-    // Tab navigation
-    document.getElementById('tab-history').addEventListener('click', () => switchTab('history'));
-    document.getElementById('tab-new').addEventListener('click', () => switchTab('new'));
-
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(`tab-${tabId}`).classList.add('active');
+    // New Decision Button - show the form panel
+    document.getElementById('new-decision-btn').addEventListener('click', showDecisionForm);
+    
+    // Close form panel
+    document.getElementById('form-close').addEventListener('click', hideDecisionForm);
+    
+    function showDecisionForm() {
+      // Reset the form first
+      resetForm();
+      // Set title to "New Decision" if not editing
+      if (!editingDecisionId) {
+        document.getElementById('form-title').textContent = 'New Decision';
+      }
+      // Show the form panel
+      document.getElementById('decision-form-panel').classList.add('active');
+    }
+    
+    function hideDecisionForm() {
+      document.getElementById('decision-form-panel').classList.remove('active');
+      // Reset the form when hiding
+      resetForm();
+    }
+    
+    function resetForm() {
+      // Reset form and editing state
+      document.getElementById('decision-form').reset();
+      document.getElementById('links-container').innerHTML = '';
+      document.getElementById('pros-container').innerHTML = '';
+      document.getElementById('cons-container').innerHTML = '';
+      currentTags = [];
+      renderTags();
+      editingDecisionId = null;
+      document.getElementById('save-decision').textContent = 'Save Decision';
       
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-      document.getElementById(`content-${tabId}`).classList.add('active');
+      // Add empty fields back
+      addLinkField();
+      addListItem('pros-container', 'pro-item');
+      addListItem('cons-container', 'con-item');
     }
 
     // Handle form submission
@@ -645,6 +746,9 @@
           }
         }, '*');
       }
+      
+      // Hide the form panel after submission
+      document.getElementById('decision-form-panel').classList.remove('active');
     });
 
     // Add new link input field
@@ -744,23 +848,11 @@
     
     // Cancel button
     document.getElementById('cancel').addEventListener('click', () => {
-      // Reset form and editing state
-      document.getElementById('decision-form').reset();
-      document.getElementById('links-container').innerHTML = '';
-      document.getElementById('pros-container').innerHTML = '';
-      document.getElementById('cons-container').innerHTML = '';
-      currentTags = [];
-      renderTags();
-      editingDecisionId = null;
-      document.getElementById('save-decision').textContent = 'Save Decision';
+      // Reset form
+      resetForm();
       
-      // Add empty fields back
-      addLinkField();
-      addListItem('pros-container', 'pro-item');
-      addListItem('cons-container', 'con-item');
-      
-      // Switch to history tab
-      switchTab('history');
+      // Hide the form panel
+      document.getElementById('decision-form-panel').classList.remove('active');
     });
     
     // Search and filter functionality
@@ -1063,6 +1155,10 @@
       if (!decision) return;
       
       editingDecisionId = id;
+      
+      // Update the form title
+      document.getElementById('form-title').textContent = 'Edit Decision';
+      
       document.getElementById('title').value = decision.title;
       document.getElementById('context').value = decision.context;
       document.getElementById('rationale').value = decision.rationale;
@@ -1168,7 +1264,7 @@
       
       // Change button text and switch to new decision tab
       document.getElementById('save-decision').textContent = 'Update Decision';
-      switchTab('new');
+      document.getElementById('decision-form-panel').classList.add('active');
     }
     
     function deleteDecision(id) {
@@ -1239,18 +1335,9 @@
         case 'decision-created':
           decisions.push(message.decision);
           // Reset form
-          document.getElementById('decision-form').reset();
-          document.getElementById('links-container').innerHTML = '';
-          document.getElementById('pros-container').innerHTML = '';
-          document.getElementById('cons-container').innerHTML = '';
-          currentTags = [];
-          renderTags();
-          addLinkField();
-          addListItem('pros-container', 'pro-item');
-          addListItem('cons-container', 'con-item');
-          
-          // Switch to history tab and update the list
-          switchTab('history');
+          resetForm();
+          // Hide form panel and update the list
+          document.getElementById('decision-form-panel').classList.remove('active');
           renderDecisionsList();
           populateTagFilter();
           break;
@@ -1268,10 +1355,8 @@
           // Reset edit mode
           editingDecisionId = null;
           document.getElementById('save-decision').textContent = 'Save Decision';
-          document.getElementById('decision-form').reset();
-          
-          // Switch to history tab and update the list
-          switchTab('history');
+          // Hide form panel and update the list
+          document.getElementById('decision-form-panel').classList.remove('active');
           renderDecisionsList();
           populateTagFilter();
           break;
