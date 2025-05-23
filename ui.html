@@ -645,12 +645,16 @@
       }
       // Show the form panel
       document.getElementById('decision-form-panel').classList.add('active');
+      // Hide the "New Decision" button when form is shown
+      document.getElementById('new-decision-btn').style.display = 'none';
     }
     
     function hideDecisionForm() {
       document.getElementById('decision-form-panel').classList.remove('active');
       // Reset the form when hiding
       resetForm();
+      // Show the "New Decision" button when form is closed
+      document.getElementById('new-decision-btn').style.display = 'flex';
     }
     
     function resetForm() {
@@ -749,6 +753,9 @@
       
       // Hide the form panel after submission
       document.getElementById('decision-form-panel').classList.remove('active');
+      
+      // Show the "New Decision" button again after submission
+      document.getElementById('new-decision-btn').style.display = 'flex';
     });
 
     // Add new link input field
@@ -853,6 +860,9 @@
       
       // Hide the form panel
       document.getElementById('decision-form-panel').classList.remove('active');
+      
+      // Show the "New Decision" button again
+      document.getElementById('new-decision-btn').style.display = 'flex';
     });
     
     // Search and filter functionality
@@ -1143,6 +1153,12 @@
       document.getElementById('detail-close').addEventListener('click', () => {
         detailPanel.classList.remove('active');
         currentDetailDecisionId = null;
+        
+        // Ensure the "New Decision" button is shown when detail panel is closed
+        // Only if the form panel is not active
+        if (!document.getElementById('decision-form-panel').classList.contains('active')) {
+          document.getElementById('new-decision-btn').style.display = 'flex';
+        }
       });
       
       // Show the panel with animation
@@ -1265,6 +1281,9 @@
       // Change button text and switch to new decision tab
       document.getElementById('save-decision').textContent = 'Update Decision';
       document.getElementById('decision-form-panel').classList.add('active');
+      
+      // Hide the "New Decision" button when editing a decision
+      document.getElementById('new-decision-btn').style.display = 'none';
     }
     
     function deleteDecision(id) {
@@ -1330,19 +1349,17 @@
             noSelectionElement.style.display = 'block';
             nodeSelectionElement.style.display = 'none';
           }
-          break;
-          
-        case 'decision-created':
+          break;          case 'decision-created':
           decisions.push(message.decision);
           // Reset form
           resetForm();
           // Hide form panel and update the list
           document.getElementById('decision-form-panel').classList.remove('active');
+          // Make sure the New Decision button is visible
+          document.getElementById('new-decision-btn').style.display = 'flex';
           renderDecisionsList();
           populateTagFilter();
-          break;
-          
-        case 'decision-updated':
+          break;          case 'decision-updated':
           const index = decisions.findIndex(d => d.id === message.decision.id);
           if (index !== -1) {
             decisions[index] = message.decision;
@@ -1357,6 +1374,8 @@
           document.getElementById('save-decision').textContent = 'Save Decision';
           // Hide form panel and update the list
           document.getElementById('decision-form-panel').classList.remove('active');
+          // Make sure the New Decision button is visible
+          document.getElementById('new-decision-btn').style.display = 'flex';
           renderDecisionsList();
           populateTagFilter();
           break;
@@ -1387,6 +1406,9 @@
     addLinkField();
     addListItem('pros-container', 'pro-item');
     addListItem('cons-container', 'con-item');
+    
+    // Make sure the New Decision button is initially visible
+    document.getElementById('new-decision-btn').style.display = 'flex';
   </script>
 </body>
 </html>
