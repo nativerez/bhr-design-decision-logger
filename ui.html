@@ -1163,7 +1163,7 @@
           </div>
         `;
         
-        // Add click event to the node tag
+        // Add click event to the node tag (the container is freshly created each time, so no need to worry about duplicate listeners)
         nodeContainer.querySelector('.tag').addEventListener('click', () => {
           navigateToNode(decision.nodeId, decision.pageName);
           // Close the detail panel after navigating
@@ -1178,21 +1178,30 @@
         document.getElementById('detail-navigate-button').style.display = 'none';
       }
       
-      // Set up action buttons
-      document.getElementById('detail-edit-button').addEventListener('click', () => {
+      // Set up action buttons - first remove any existing event listeners by cloning and replacing
+      const editButton = document.getElementById('detail-edit-button');
+      const newEditButton = editButton.cloneNode(true);
+      editButton.parentNode.replaceChild(newEditButton, editButton);
+      newEditButton.addEventListener('click', () => {
         detailPanel.classList.remove('active');
         editDecision(decision.id);
       });
       
-      document.getElementById('detail-delete-button').addEventListener('click', () => {
+      const deleteButton = document.getElementById('detail-delete-button');
+      const newDeleteButton = deleteButton.cloneNode(true);
+      deleteButton.parentNode.replaceChild(newDeleteButton, deleteButton);
+      newDeleteButton.addEventListener('click', () => {
         if (confirm('Are you sure you want to delete this decision?')) {
           detailPanel.classList.remove('active');
           deleteDecision(decision.id);
         }
       });
       
-      // Set up close button
-      document.getElementById('detail-close').addEventListener('click', () => {
+      // Set up close button - first remove any existing event listeners by cloning and replacing
+      const closeButton = document.getElementById('detail-close');
+      const newCloseButton = closeButton.cloneNode(true);
+      closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+      newCloseButton.addEventListener('click', () => {
         detailPanel.classList.remove('active');
         currentDetailDecisionId = null;
         
@@ -1203,9 +1212,11 @@
         }
       });
       
-      // Handle navigate button click
+      // Handle navigate button click - first remove any existing event listeners by cloning and replacing
       const navigateButton = document.getElementById('detail-navigate-button');
-      navigateButton.onclick = () => {
+      const newNavigateButton = navigateButton.cloneNode(true);
+      navigateButton.parentNode.replaceChild(newNavigateButton, navigateButton);
+      newNavigateButton.onclick = () => {
         if (decision.nodeId) {
           navigateToNode(decision.nodeId, decision.pageName);
           // Close the detail panel after navigating
