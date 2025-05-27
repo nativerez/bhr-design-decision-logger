@@ -5,7 +5,7 @@ interface Decision {
   id: string;
   title: string;
   rationale: string;
-  context: string;
+  context: string; // Represents "Decision Details" in the UI
   timestamp: number;
   author: string;
   links: Array<{title: string, url: string}>;

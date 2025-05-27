@@ -504,8 +504,8 @@
         <input type="text" id="title" placeholder="What is the decision about?" required>
       </div>
       <div class="form-group">
-        <label for="context">Context</label>
-        <textarea id="context" placeholder="What is the background for this decision?" required></textarea>
+        <label for="context">Decision Details</label>
+        <textarea id="context" placeholder="Describe the details of this decision" required></textarea>
       </div>
       <div class="form-group">
         <label for="status">Status</label>
@@ -599,8 +599,8 @@
     </div>
     
     <div class="detail-section">
-      <div class="detail-section-title">Context</div>
-      <div class="detail-section-content" id="detail-context">Context content will go here</div>
+      <div class="detail-section-title">Decision Details</div>
+      <div class="detail-section-content" id="detail-context">Decision details will go here</div>
     </div>
     
     <div class="detail-section">
@@ -909,7 +909,7 @@
         // Search text filter
         const matchesSearch = searchText === '' || 
           decision.title.toLowerCase().includes(searchText) || 
-          decision.context.toLowerCase().includes(searchText) ||
+          decision.context.toLowerCase().includes(searchText) || // Searches in Decision Details
           decision.rationale.toLowerCase().includes(searchText);
         
         // Tag filter
