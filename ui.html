@@ -123,6 +123,40 @@
       cursor: pointer;
       font-size: 12px;
     }
+    
+    /* Tag suggestions dropdown */
+    .tag-suggestions {
+      position: absolute;
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-height: 150px;
+      overflow-y: auto;
+      width: calc(100% - 40px);
+      z-index: 100;
+      display: none;
+    }
+    
+    .tag-suggestions.visible {
+      display: block;
+    }
+    
+    .tag-suggestion {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    
+    .tag-suggestion:hover {
+      background-color: #f5f5f5;
+    }
+    
+    /* Highlighted suggestion */
+    .tag-suggestion.highlighted {
+      background-color: #e9f5ff;
+    }
+    
     .button {
       background: #18a0fb;
       color: white;
@@ -531,7 +565,10 @@
       <!-- Tags Section -->
       <div class="section">
         <h3>Tags</h3>
-        <input type="text" id="tag-input" placeholder="Add tags (comma separated)">
+        <div style="position: relative;">
+          <input type="text" id="tag-input" placeholder="Add tags (comma separated)">
+          <div id="tag-suggestions" class="tag-suggestions"></div>
+        </div>
         <div class="tags-container" id="tags-container">
           <!-- Tags will be inserted here -->
         </div>
@@ -626,6 +663,9 @@
     let selectedNodeName = null;
     let selectedPageName = null;
     let currentDetailDecisionId = null;
+    let allUniqueTags = new Set(); // Store all unique tags for autocomplete
+    let currentTagSuggestions = []; // Current suggestions based on user input
+    let highlightedSuggestionIndex = -1; // Currently highlighted suggestion
     
     // Get current user info
     parent.postMessage({ pluginMessage: { type: 'get-user-info' } }, '*');
@@ -812,19 +852,7 @@
       });
     }
     
-    // Handle tag input
-    document.getElementById('tag-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ',') {
-        e.preventDefault();
-        const input = document.getElementById('tag-input');
-        const tagText = input.value.trim();
-        
-        if (tagText && !currentTags.includes(tagText)) {
-          addTag(tagText);
-          input.value = '';
-        }
-      }
-    });
+    // Handle tag input - enhanced with autocomplete is implemented above
     
     function addTag(tagText) {
       currentTags.push(tagText);
@@ -1301,19 +1329,166 @@
       const dropdown = document.getElementById('filter-tags');
       dropdown.innerHTML = '<option value="">All tags</option>';
       
-      const allTags = new Set();
+      // Also update all unique tags for autocomplete
+      allUniqueTags = new Set();
+      
       decisions.forEach(decision => {
         if (decision.tags) {
-          decision.tags.forEach(tag => allTags.add(tag));
+          decision.tags.forEach(tag => allUniqueTags.add(tag));
         }
       });
       
-      Array.from(allTags).sort().forEach(tag => {
+      Array.from(allUniqueTags).sort().forEach(tag => {
         const option = document.createElement('option');
         option.value = tag;
         option.textContent = tag;
         dropdown.appendChild(option);
       });
+    }
+    
+    // Handle tag input - updating with autocomplete feature
+    document.getElementById('tag-input').addEventListener('input', showTagSuggestions);
+    document.getElementById('tag-input').addEventListener('keydown', handleTagInputKeydown);
+    document.getElementById('tag-input').addEventListener('blur', hideTagSuggestions);
+    
+    // Show tag suggestions based on current input
+    function showTagSuggestions(e) {
+      const input = e.target;
+      const tagText = input.value.trim();
+      
+      if (tagText.length === 0) {
+        hideTagSuggestions();
+        return;
+      }
+      
+      // Filter tags that match the input
+      currentTagSuggestions = Array.from(allUniqueTags)
+        .filter(tag => 
+          tag.toLowerCase().includes(tagText.toLowerCase()) && 
+          !currentTags.includes(tag)
+        )
+        .sort();
+      
+      const suggestionsContainer = document.getElementById('tag-suggestions');
+      suggestionsContainer.innerHTML = '';
+      
+      if (currentTagSuggestions.length > 0) {
+        currentTagSuggestions.forEach((tag, index) => {
+          const suggestionElement = document.createElement('div');
+          suggestionElement.classList.add('tag-suggestion');
+          suggestionElement.textContent = tag;
+          suggestionElement.addEventListener('mousedown', (e) => {
+            // Using mousedown instead of click to prevent blur from firing first
+            e.preventDefault();
+            selectTagSuggestion(tag);
+          });
+          suggestionsContainer.appendChild(suggestionElement);
+        });
+        
+        suggestionsContainer.classList.add('visible');
+        highlightedSuggestionIndex = -1; // Reset highlighted suggestion
+      } else {
+        suggestionsContainer.classList.remove('visible');
+      }
+    }
+    
+    // Handle keyboard navigation in tag suggestions
+    function handleTagInputKeydown(e) {
+      const suggestionsContainer = document.getElementById('tag-suggestions');
+      const suggestions = suggestionsContainer.querySelectorAll('.tag-suggestion');
+      
+      if (suggestions.length === 0) {
+        if (e.key === 'Enter' || e.key === ',') {
+          e.preventDefault();
+          const input = document.getElementById('tag-input');
+          const tagText = input.value.trim();
+          
+          if (tagText && !currentTags.includes(tagText)) {
+            addTag(tagText);
+            input.value = '';
+          }
+        }
+        return;
+      }
+      
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          highlightedSuggestionIndex = (highlightedSuggestionIndex + 1) % suggestions.length;
+          updateHighlightedSuggestion();
+          break;
+          
+        case 'ArrowUp':
+          e.preventDefault();
+          highlightedSuggestionIndex = (highlightedSuggestionIndex - 1 + suggestions.length) % suggestions.length;
+          updateHighlightedSuggestion();
+          break;
+          
+        case 'Enter':
+        case 'Tab':
+          if (highlightedSuggestionIndex >= 0) {
+            e.preventDefault();
+            selectTagSuggestion(currentTagSuggestions[highlightedSuggestionIndex]);
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const input = document.getElementById('tag-input');
+            const tagText = input.value.trim();
+            
+            if (tagText && !currentTags.includes(tagText)) {
+              addTag(tagText);
+              input.value = '';
+              hideTagSuggestions();
+            }
+          }
+          break;
+          
+        case ',':
+          e.preventDefault();
+          const input = document.getElementById('tag-input');
+          const tagText = input.value.trim();
+          
+          if (tagText && !currentTags.includes(tagText)) {
+            addTag(tagText);
+            input.value = '';
+            hideTagSuggestions();
+          }
+          break;
+          
+        case 'Escape':
+          e.preventDefault();
+          hideTagSuggestions();
+          break;
+      }
+    }
+    
+    // Update which suggestion is highlighted
+    function updateHighlightedSuggestion() {
+      const suggestions = document.querySelectorAll('.tag-suggestion');
+      
+      suggestions.forEach((suggestion, index) => {
+        if (index === highlightedSuggestionIndex) {
+          suggestion.classList.add('highlighted');
+        } else {
+          suggestion.classList.remove('highlighted');
+        }
+      });
+    }
+    
+    // Select a tag suggestion and add it
+    function selectTagSuggestion(tag) {
+      if (tag && !currentTags.includes(tag)) {
+        addTag(tag);
+        document.getElementById('tag-input').value = '';
+        hideTagSuggestions();
+        document.getElementById('tag-input').focus(); // Keep focus on the input
+      }
+    }
+    
+    // Hide the tag suggestions dropdown
+    function hideTagSuggestions() {
+      setTimeout(() => {
+        document.getElementById('tag-suggestions').classList.remove('visible');
+      }, 100); // Small delay to allow for click to register on suggestion
     }
     
     // Message handler from the plugin code
@@ -1326,7 +1501,7 @@
         case 'load-decisions':
           decisions = message.decisions || [];
           renderDecisionsList();
-          populateTagFilter();
+          populateTagFilter(); // This now also extracts all unique tags for autocomplete
           break;
           
         case 'selection-info':
@@ -1358,7 +1533,7 @@
           // Make sure the New Decision button is visible
           document.getElementById('new-decision-btn').style.display = 'flex';
           renderDecisionsList();
-          populateTagFilter();
+          populateTagFilter(); // This also updates tag suggestions
           break;          case 'decision-updated':
           const index = decisions.findIndex(d => d.id === message.decision.id);
           if (index !== -1) {
@@ -1377,7 +1552,7 @@
           // Make sure the New Decision button is visible
           document.getElementById('new-decision-btn').style.display = 'flex';
           renderDecisionsList();
-          populateTagFilter();
+          populateTagFilter(); // This also updates tag suggestions
           break;
           
         case 'decision-deleted':
@@ -1390,7 +1565,7 @@
           }
           
           renderDecisionsList();
-          populateTagFilter();
+          populateTagFilter(); // This also updates tag suggestions
           break;
           
         case 'user-info':
@@ -1409,6 +1584,83 @@
     
     // Make sure the New Decision button is initially visible
     document.getElementById('new-decision-btn').style.display = 'flex';
+    
+    // Tag suggestions logic
+    document.getElementById('tag-input').addEventListener('input', (e) => {
+      const value = e.target.value.trim();
+      
+      if (value === '') {
+        // Hide suggestions when input is empty
+        document.getElementById('tag-suggestions').classList.remove('visible');
+        currentTagSuggestions = [];
+        return;
+      }
+      
+      // Filter suggestions based on input
+      currentTagSuggestions = Array.from(allUniqueTags).filter(tag => 
+        tag.toLowerCase().includes(value.toLowerCase())
+      );
+      
+      // Show suggestions dropdown
+      const suggestionsContainer = document.getElementById('tag-suggestions');
+      suggestionsContainer.innerHTML = '';
+      
+      currentTagSuggestions.forEach((tag, index) => {
+        const div = document.createElement('div');
+        div.classList.add('tag-suggestion');
+        div.textContent = tag;
+        
+        // Highlight suggestion on hover
+        div.addEventListener('mouseenter', () => {
+          highlightedSuggestionIndex = index;
+          updateTagSuggestionHighlight();
+        });
+        
+        // Select suggestion on click
+        div.addEventListener('click', () => {
+          addTag(tag);
+          document.getElementById('tag-input').value = '';
+          suggestionsContainer.classList.remove('visible');
+        });
+        
+        suggestionsContainer.appendChild(div);
+      });
+      
+      // Show the suggestions container
+      suggestionsContainer.classList.add('visible');
+      
+      // Update highlight on arrow key navigation
+      document.getElementById('tag-input').addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+          highlightedSuggestionIndex = Math.min(highlightedSuggestionIndex + 1, currentTagSuggestions.length - 1);
+          updateTagSuggestionHighlight();
+          e.preventDefault();
+        } else if (e.key === 'ArrowUp') {
+          highlightedSuggestionIndex = Math.max(highlightedSuggestionIndex - 1, 0);
+          updateTagSuggestionHighlight();
+          e.preventDefault();
+        } else if (e.key === 'Enter') {
+          // Select highlighted suggestion on Enter
+          if (highlightedSuggestionIndex >= 0 && highlightedSuggestionIndex < currentTagSuggestions.length) {
+            const tag = currentTagSuggestions[highlightedSuggestionIndex];
+            addTag(tag);
+            document.getElementById('tag-input').value = '';
+            document.getElementById('tag-suggestions').classList.remove('visible');
+          }
+        }
+      });
+    });
+    
+    function updateTagSuggestionHighlight() {
+      const suggestions = document.querySelectorAll('.tag-suggestion');
+      suggestions.forEach((s, index) => {
+        if (index === highlightedSuggestionIndex) {
+          s.classList.add('highlighted');
+        } else {
+          s.classList.remove('highlighted');
+        }
+      });
+    }
   </script>
 </body>
 </html>
