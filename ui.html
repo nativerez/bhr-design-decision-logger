@@ -187,6 +187,23 @@
       background-color: #fff;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       position: relative;
+      transition: all 0.2s ease;
+    }
+    
+    .decision-card:hover {
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+      border-color: #d0d0d0;
+    }
+    
+    /* Enhanced styling for better clickable affordance */
+    .decision-card {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .figma-node-link .tag:hover {
+      background-color: #D4EDFF !important;
     }
     .decision-header {
       display: flex;
@@ -645,6 +662,9 @@
       <div id="detail-node-info">
         <!-- Node info will be inserted here -->
       </div>
+      <div style="margin-top: 10px;">
+        <button id="detail-navigate-button" class="button secondary">Navigate to Element</button>
+      </div>
     </div>
     
     <div class="detail-actions">
@@ -954,6 +974,8 @@
       decisionsToRender.forEach(decision => {
         const card = document.createElement('div');
         card.classList.add('decision-card');
+        // Make the entire card clickable by adding cursor pointer style
+        card.style.cursor = 'pointer';
         
         const date = new Date(decision.timestamp);
         const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
@@ -987,38 +1009,23 @@
               ${decision.tags.map(tag => `<div class="tag"><span>${tag}</span></div>`).join('')}
             </div>` : ''}
           ${figmaNodeSection}
-          <div class="decision-actions">
-            <button class="button secondary view-details" data-id="${decision.id}">View Details</button>
-            <button class="button secondary edit-decision" data-id="${decision.id}">Edit</button>
-            <button class="button secondary danger delete-decision" data-id="${decision.id}">Delete</button>
-          </div>
         `;
         
         container.appendChild(card);
         
-        // Add event listeners
-        card.querySelector('.view-details').addEventListener('click', () => {
+        // Make the entire card clickable to view details and navigate to linked element
+        card.addEventListener('click', (e) => {
+          // First, open the details panel
           viewDecisionDetails(decision.id);
-        });
-        
-        card.querySelector('.edit-decision').addEventListener('click', () => {
-          editDecision(decision.id);
-        });
-        
-        card.querySelector('.delete-decision').addEventListener('click', () => {
-          if (confirm('Are you sure you want to delete this decision?')) {
-            deleteDecision(decision.id);
+          
+          // If there's a linked element, also navigate to it
+          if (decision.nodeId) {
+            // If we're clicking directly on the node link tag, don't double-navigate
+            if (!e.target.closest('.figma-node-link .tag')) {
+              navigateToNode(decision.nodeId, decision.pageName);
+            }
           }
         });
-        
-        // Add node navigation event listener if there's a linked node
-        const figmaNodeLink = card.querySelector('.figma-node-link .tag');
-        if (figmaNodeLink) {
-          figmaNodeLink.addEventListener('click', () => {
-            const nodeId = figmaNodeLink.dataset.nodeId;
-            navigateToNode(nodeId, decision.pageName);
-          });
-        }
       });
     }
     
@@ -1159,9 +1166,16 @@
         // Add click event to the node tag
         nodeContainer.querySelector('.tag').addEventListener('click', () => {
           navigateToNode(decision.nodeId, decision.pageName);
+          // Close the detail panel after navigating
+          detailPanel.classList.remove('active');
         });
+        
+        // Show the navigate button
+        document.getElementById('detail-navigate-button').style.display = 'inline-block';
       } else {
         nodeSection.style.display = 'none';
+        // Hide the navigate button if there's no linked node
+        document.getElementById('detail-navigate-button').style.display = 'none';
       }
       
       // Set up action buttons
@@ -1188,6 +1202,16 @@
           document.getElementById('new-decision-btn').style.display = 'flex';
         }
       });
+      
+      // Handle navigate button click
+      const navigateButton = document.getElementById('detail-navigate-button');
+      navigateButton.onclick = () => {
+        if (decision.nodeId) {
+          navigateToNode(decision.nodeId, decision.pageName);
+          // Close the detail panel after navigating
+          detailPanel.classList.remove('active');
+        }
+      };
       
       // Show the panel with animation
       detailPanel.classList.add('active');
