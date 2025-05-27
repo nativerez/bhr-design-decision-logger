@@ -1013,22 +1013,18 @@
         
         container.appendChild(card);
         
-        // Make the entire card clickable to view details
+        // Make the entire card clickable to view details and navigate to linked element
         card.addEventListener('click', (e) => {
-          // Check if the click was on a node link (which has its own handler)
-          if (e.target.closest('.figma-node-link .tag')) {
-            // If clicking on the node link, navigate to the element
-            const figmaNodeLink = e.target.closest('.figma-node-link .tag');
-            const nodeId = figmaNodeLink.dataset.nodeId;
-            navigateToNode(nodeId, decision.pageName);
-            // We still want to show the details after navigating to the node
-            setTimeout(() => {
-              viewDecisionDetails(decision.id);
-            }, 100);
-            return;
-          }
-          // Otherwise just open the decision details
+          // First, open the details panel
           viewDecisionDetails(decision.id);
+          
+          // If there's a linked element, also navigate to it
+          if (decision.nodeId) {
+            // If we're clicking directly on the node link tag, don't double-navigate
+            if (!e.target.closest('.figma-node-link .tag')) {
+              navigateToNode(decision.nodeId, decision.pageName);
+            }
+          }
         });
       });
     }
