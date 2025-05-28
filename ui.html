@@ -43,12 +43,12 @@
       border-bottom: 2px solid #18a0fb;
       color: #18a0fb;
     }
-    /* These classes are kept for backward compatibility */
+    /* Tab content visibility control */
     .tab-content {
-      display: none;
+      display: none !important; /* Use !important to override any other styles */
     }
     .tab-content.active {
-      display: block;
+      display: block !important; /* Use !important to override any other styles */
     }
     .form-group {
       margin-bottom: 16px;
@@ -244,8 +244,8 @@
       font-size: 14px;
     }
     
-    /* History tab background */
-    #content-history {
+    /* Tab content background */
+    #content-decisions, #content-resources {
       background-color: #f5f5f5;
       padding: 16px;
       border-radius: 6px;
@@ -454,17 +454,24 @@
     }
     
     .content-main {
-      display: block;
+      position: relative;
+      width: 100%;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="header-title">📋 Decision History</div>
+    <div class="header-title">📋 Design Decision Logger</div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-container">
+    <div class="tab active" data-tab="decisions">Decisions</div>
+    <div class="tab" data-tab="resources">Resources</div>
   </div>
 
   <!-- Decision History -->
-  <div id="content-history" class="content-main">
+  <div id="content-decisions" class="content-main tab-content active">
     <div class="filter-bar">
       <input type="text" id="search-input" placeholder="Search decisions...">
       <select id="filter-tags">
@@ -491,8 +498,28 @@
     </div>
   </div>
 
-  <!-- New Decision Action Button -->
+  <!-- Resources Tab Content -->
+  <div id="content-resources" class="content-main tab-content">
+    <div class="filter-bar">
+      <input type="text" id="resource-search-input" placeholder="Search resources...">
+      <select id="resource-category-filter">
+        <option value="">All categories</option>
+        <option value="documentation">Documentation</option>
+        <option value="guidelines">Guidelines</option>
+        <option value="research">Research</option>
+        <option value="reference">Reference</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="resource-list" id="resource-list">
+      <!-- Resource cards will be inserted here -->
+      <div class="empty-state">No resources added yet.</div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
   <button id="new-decision-btn" class="action-button">+</button>
+  <button id="new-resource-btn" class="action-button" style="display: none;">+</button>
 
   <!-- Decision Form Panel (initially hidden) -->
   <div id="decision-form-panel" class="decision-form-panel">
@@ -603,6 +630,97 @@
     <!-- Edit form will be similar to new decision form -->
   </div>
   
+  <!-- Resource Form Panel (initially hidden) -->
+  <div id="resource-form-panel" class="decision-form-panel">
+    <div class="detail-header">
+      <div class="detail-title" id="resource-form-title">New Resource</div>
+      <button class="detail-close" id="resource-form-close">✕</button>
+    </div>
+    
+    <form id="resource-form">
+      <div class="form-group">
+        <label for="resource-title">Resource Title</label>
+        <input type="text" id="resource-title" placeholder="Title of the resource" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="resource-description">Description</label>
+        <textarea id="resource-description" placeholder="Describe this resource" required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="resource-url">URL</label>
+        <input type="text" id="resource-url" placeholder="https://..." required>
+      </div>
+      
+      <div class="form-group">
+        <label for="resource-category">Category</label>
+        <select id="resource-category" required>
+          <option value="documentation">Documentation</option>
+          <option value="guidelines">Guidelines</option>
+          <option value="research">Research</option>
+          <option value="reference">Reference</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      
+      <!-- Tags Section -->
+      <div class="section">
+        <h3>Tags</h3>
+        <div style="position: relative;">
+          <input type="text" id="resource-tag-input" placeholder="Add tags (comma separated)">
+          <div id="resource-tag-suggestions" class="tag-suggestions"></div>
+        </div>
+        <div class="tags-container" id="resource-tags-container">
+          <!-- Tags will be inserted here -->
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" id="save-resource" class="button">Save Resource</button>
+        <button type="button" id="cancel-resource" class="button secondary">Cancel</button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Resource Detail Panel (hidden by default) -->
+  <div id="resource-detail-panel" class="decision-detail-panel">
+    <div class="detail-header">
+      <div class="detail-title" id="resource-detail-title">Resource Title</div>
+      <div class="tag resource-category-tag" id="resource-detail-category">Category</div>
+      <button class="detail-close" id="resource-detail-close">✕</button>
+    </div>
+    <div class="detail-meta">
+      <div id="resource-detail-author">By Author</div>
+      <div id="resource-detail-date">On Date</div>
+    </div>
+    
+    <div class="detail-section">
+      <div class="detail-section-title">Description</div>
+      <div class="detail-section-content" id="resource-detail-description">Description will go here</div>
+    </div>
+    
+    <div class="detail-section">
+      <div class="detail-section-title">Link</div>
+      <div class="detail-links">
+        <a href="#" target="_blank" class="detail-link" id="resource-detail-link">Resource URL</a>
+      </div>
+    </div>
+    
+    <div id="resource-detail-tags-section" class="detail-section" style="display: none;">
+      <div class="detail-section-title">Tags</div>
+      <div class="tags-container" id="resource-detail-tags">
+        <!-- Tags will be inserted here -->
+      </div>
+    </div>
+    
+    <div class="detail-actions">
+      <button class="button secondary" id="resource-detail-visit-button">Visit Resource</button>
+      <button class="button secondary" id="resource-detail-edit-button">Edit</button>
+      <button class="button secondary danger" id="resource-detail-delete-button">Delete</button>
+    </div>
+  </div>
+
   <!-- Decision Detail Panel (hidden by default) -->
   <div id="decision-detail-panel" class="decision-detail-panel">
     <div class="detail-header">
@@ -676,22 +794,62 @@
   <script>
     // Global variables
     let decisions = [];
+    let resources = []; // Array to store all resources
     let currentUser = null;
     let editingDecisionId = null;
+    let editingResourceId = null;
     let currentTags = [];
+    let currentResourceTags = []; // Tags for the current resource being edited
     let selectedNodeId = null;
     let selectedNodeName = null;
     let selectedPageName = null;
     let currentDetailDecisionId = null;
+    let currentDetailResourceId = null;
     let allUniqueTags = new Set(); // Store all unique tags for autocomplete
     let currentTagSuggestions = []; // Current suggestions based on user input
     let highlightedSuggestionIndex = -1; // Currently highlighted suggestion
+    let activeTab = 'decisions'; // Track which tab is currently active
     
     // Get current user info
     parent.postMessage({ pluginMessage: { type: 'get-user-info' } }, '*');
+    
+    // Tab switching functionality
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.dataset.tab;
+        switchTab(tabId);
+      });
+    });
+    
+    // Initialize the correct tab on page load
+    switchTab(activeTab);
+    
+    function switchTab(tabId) {
+      // Update active tab
+      activeTab = tabId;
+      
+      // Update tab UI
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.remove('active');
+      });
+      document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+      
+      // Update content visibility
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.getElementById(`content-${tabId}`).classList.add('active');
+      
+      // Update the action button visibility
+      document.getElementById('new-decision-btn').style.display = (tabId === 'decisions') ? 'flex' : 'none';
+      document.getElementById('new-resource-btn').style.display = (tabId === 'resources') ? 'flex' : 'none';
+    }
 
     // New Decision Button - show the form panel
     document.getElementById('new-decision-btn').addEventListener('click', showDecisionForm);
+    
+    // New Resource Button - show the resource form panel
+    document.getElementById('new-resource-btn').addEventListener('click', showResourceForm);
     
     // Close form panel
     document.getElementById('form-close').addEventListener('click', hideDecisionForm);
@@ -912,6 +1070,341 @@
       // Show the "New Decision" button again
       document.getElementById('new-decision-btn').style.display = 'flex';
     });
+    
+    // Resource Form Functions
+    function showResourceForm() {
+      // Reset the resource form first
+      resetResourceForm();
+      // Set title to "New Resource" if not editing
+      if (!editingResourceId) {
+        document.getElementById('resource-form-title').textContent = 'New Resource';
+      }
+      // Show the form panel
+      document.getElementById('resource-form-panel').classList.add('active');
+      // Hide the "New Resource" button when form is shown
+      document.getElementById('new-resource-btn').style.display = 'none';
+    }
+    
+    function hideResourceForm() {
+      document.getElementById('resource-form-panel').classList.remove('active');
+      // Reset the form when hiding
+      resetResourceForm();
+      // Show the "New Resource" button when form is closed
+      if (activeTab === 'resources') {
+        document.getElementById('new-resource-btn').style.display = 'flex';
+      }
+    }
+    
+    function resetResourceForm() {
+      // Reset form and editing state
+      document.getElementById('resource-form').reset();
+      currentResourceTags = [];
+      renderResourceTags();
+      editingResourceId = null;
+      document.getElementById('save-resource').textContent = 'Save Resource';
+    }
+    
+    // Close resource form panel
+    document.getElementById('resource-form-close').addEventListener('click', hideResourceForm);
+    
+    // Cancel resource button
+    document.getElementById('cancel-resource').addEventListener('click', hideResourceForm);
+    
+    // Handle resource form submission
+    document.getElementById('resource-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const title = document.getElementById('resource-title').value;
+      const description = document.getElementById('resource-description').value;
+      const url = document.getElementById('resource-url').value;
+      const category = document.getElementById('resource-category').value;
+      
+      // Check if we're editing or creating
+      if (editingResourceId) {
+        // Editing an existing resource
+        parent.postMessage({
+          pluginMessage: {
+            type: 'edit-resource',
+            resource: {
+              id: editingResourceId,
+              title,
+              description,
+              url,
+              category,
+              tags: currentResourceTags
+            }
+          }
+        }, '*');
+      } else {
+        // Creating a new resource
+        parent.postMessage({
+          pluginMessage: {
+            type: 'create-resource',
+            title,
+            description,
+            url,
+            category,
+            tags: currentResourceTags
+          }
+        }, '*');
+      }
+      
+      // Hide the form panel after submission
+      document.getElementById('resource-form-panel').classList.remove('active');
+      
+      // Show the "New Resource" button again after submission if we're on the resources tab
+      if (activeTab === 'resources') {
+        document.getElementById('new-resource-btn').style.display = 'flex';
+      }
+    });
+    
+    // Handle resource tag input
+    function addResourceTag(tagText) {
+      currentResourceTags.push(tagText);
+      renderResourceTags();
+    }
+    
+    function renderResourceTags() {
+      const container = document.getElementById('resource-tags-container');
+      container.innerHTML = '';
+      
+      currentResourceTags.forEach(tag => {
+        const tagElement = document.createElement('div');
+        tagElement.classList.add('tag');
+        tagElement.innerHTML = `
+          <span>${tag}</span>
+          <button type="button" data-tag="${tag}">✕</button>
+        `;
+        container.appendChild(tagElement);
+        
+        // Add event listener to remove tag
+        tagElement.querySelector('button').addEventListener('click', (e) => {
+          const tagToRemove = e.target.dataset.tag;
+          currentResourceTags = currentResourceTags.filter(t => t !== tagToRemove);
+          renderResourceTags();
+        });
+      });
+    }
+    
+    // Resource tag input handling
+    document.getElementById('resource-tag-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const input = document.getElementById('resource-tag-input');
+        const tagText = input.value.trim();
+        
+        if (tagText && !currentResourceTags.includes(tagText)) {
+          addResourceTag(tagText);
+          input.value = '';
+          
+          // Add to global tags set for future autocomplete
+          allUniqueTags.add(tagText);
+        }
+      }
+    });
+    
+    // Render resources list
+    function renderResourcesList(resourcesToRender = resources) {
+      const container = document.getElementById('resource-list');
+      container.innerHTML = '';
+      
+      if (resourcesToRender.length === 0) {
+        container.innerHTML = '<div class="empty-state">No resources added yet.</div>';
+        return;
+      }
+      
+      // Sort resources alphabetically by default
+      resourcesToRender.sort((a, b) => a.title.localeCompare(b.title));
+      
+      resourcesToRender.forEach(resource => {
+        const card = document.createElement('div');
+        card.classList.add('decision-card', 'resource-card');
+        card.style.cursor = 'pointer';
+        
+        const date = new Date(resource.timestamp);
+        const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+        
+        card.innerHTML = `
+          <div class="decision-header">
+            <div class="decision-title">${resource.title}</div>
+            <div class="tag resource-category-tag">${resource.category}</div>
+          </div>
+          <div class="decision-meta">
+            By ${resource.author} on ${formattedDate}
+          </div>
+          <div class="decision-context">${resource.description}</div>
+          ${resource.tags && resource.tags.length > 0 ? 
+            `<div class="tags-container">
+              ${resource.tags.map(tag => `<div class="tag"><span>${tag}</span></div>`).join('')}
+            </div>` : ''}
+        `;
+        
+        container.appendChild(card);
+        
+        // Make the card clickable
+        card.addEventListener('click', () => {
+          viewResourceDetails(resource.id);
+        });
+      });
+    }
+    
+    // Function to show resource details
+    function viewResourceDetails(id) {
+      const resource = resources.find(r => r.id === id);
+      if (!resource) return;
+      
+      currentDetailResourceId = id;
+      
+      // Set details in the panel
+      const detailPanel = document.getElementById('resource-detail-panel');
+      
+      // Basic info
+      document.getElementById('resource-detail-title').textContent = resource.title;
+      
+      // Category
+      const categoryElement = document.getElementById('resource-detail-category');
+      categoryElement.textContent = resource.category.charAt(0).toUpperCase() + resource.category.slice(1);
+      categoryElement.className = 'tag resource-category-tag';
+      
+      // Format date
+      const date = new Date(resource.timestamp);
+      const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+      
+      document.getElementById('resource-detail-author').textContent = `By ${resource.author}`;
+      document.getElementById('resource-detail-date').textContent = `On ${formattedDate}`;
+      
+      // Set description
+      document.getElementById('resource-detail-description').textContent = resource.description;
+      
+      // Set link
+      const linkElement = document.getElementById('resource-detail-link');
+      linkElement.href = resource.url;
+      linkElement.textContent = resource.title;
+      
+      // Tags section
+      const tagsSection = document.getElementById('resource-detail-tags-section');
+      const tagsContainer = document.getElementById('resource-detail-tags');
+      
+      if (resource.tags && resource.tags.length > 0) {
+        tagsSection.style.display = 'block';
+        tagsContainer.innerHTML = '';
+        
+        resource.tags.forEach(tag => {
+          const tagElement = document.createElement('div');
+          tagElement.classList.add('tag');
+          tagElement.innerHTML = `<span>${tag}</span>`;
+          tagsContainer.appendChild(tagElement);
+        });
+      } else {
+        tagsSection.style.display = 'none';
+      }
+      
+      // Set up visit button
+      const visitButton = document.getElementById('resource-detail-visit-button');
+      visitButton.onclick = () => {
+        window.open(resource.url, '_blank');
+      };
+      
+      // Set up action buttons - first remove any existing event listeners by cloning and replacing
+      const editButton = document.getElementById('resource-detail-edit-button');
+      const newEditButton = editButton.cloneNode(true);
+      editButton.parentNode.replaceChild(newEditButton, editButton);
+      newEditButton.addEventListener('click', () => {
+        detailPanel.classList.remove('active');
+        editResource(resource.id);
+      });
+      
+      const deleteButton = document.getElementById('resource-detail-delete-button');
+      const newDeleteButton = deleteButton.cloneNode(true);
+      deleteButton.parentNode.replaceChild(newDeleteButton, deleteButton);
+      newDeleteButton.addEventListener('click', () => {
+        if (confirm('Are you sure you want to delete this resource?')) {
+          detailPanel.classList.remove('active');
+          deleteResource(resource.id);
+        }
+      });
+      
+      // Set up close button
+      const closeButton = document.getElementById('resource-detail-close');
+      const newCloseButton = closeButton.cloneNode(true);
+      closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+      newCloseButton.addEventListener('click', () => {
+        detailPanel.classList.remove('active');
+        currentDetailResourceId = null;
+        
+        // Ensure the "New Resource" button is shown when detail panel is closed
+        if (activeTab === 'resources') {
+          document.getElementById('new-resource-btn').style.display = 'flex';
+        }
+      });
+      
+      // Show the panel with animation
+      detailPanel.classList.add('active');
+    }
+    
+    // Edit resource function
+    function editResource(id) {
+      // Load the resource data into the form and switch to edit mode
+      const resource = resources.find(r => r.id === id);
+      if (!resource) return;
+      
+      editingResourceId = id;
+      
+      // Update form title
+      document.getElementById('resource-form-title').textContent = 'Edit Resource';
+      
+      // Fill in the form fields
+      document.getElementById('resource-title').value = resource.title;
+      document.getElementById('resource-description').value = resource.description;
+      document.getElementById('resource-url').value = resource.url;
+      document.getElementById('resource-category').value = resource.category;
+      
+      // Set the tags
+      currentResourceTags = resource.tags ? [...resource.tags] : [];
+      renderResourceTags();
+      
+      // Change button text
+      document.getElementById('save-resource').textContent = 'Update Resource';
+      
+      // Show the form panel
+      document.getElementById('resource-form-panel').classList.add('active');
+      
+      // Hide the "New Resource" button
+      document.getElementById('new-resource-btn').style.display = 'none';
+    }
+    
+    // Delete resource function
+    function deleteResource(id) {
+      parent.postMessage({
+        pluginMessage: {
+          type: 'delete-resource',
+          id
+        }
+      }, '*');
+    }
+    
+    // Resource search and filter
+    document.getElementById('resource-search-input').addEventListener('input', filterResources);
+    document.getElementById('resource-category-filter').addEventListener('change', filterResources);
+    
+    function filterResources() {
+      const searchText = document.getElementById('resource-search-input').value.toLowerCase();
+      const categoryFilter = document.getElementById('resource-category-filter').value;
+      
+      const filtered = resources.filter(resource => {
+        // Search text filter
+        const matchesSearch = searchText === '' || 
+          resource.title.toLowerCase().includes(searchText) || 
+          resource.description.toLowerCase().includes(searchText);
+        
+        // Category filter
+        const matchesCategory = categoryFilter === '' || resource.category === categoryFilter;
+        
+        return matchesSearch && matchesCategory;
+      });
+      
+      renderResourcesList(filtered);
+    }
     
     // Search and filter functionality
     document.getElementById('search-input').addEventListener('input', filterDecisions);
@@ -1539,6 +2032,11 @@
           populateTagFilter(); // This now also extracts all unique tags for autocomplete
           break;
           
+        case 'load-resources':
+          resources = message.resources || [];
+          renderResourcesList();
+          break;
+          
         case 'selection-info':
           // Update the UI to show the currently selected node
           selectedNodeId = message.nodeId;
@@ -1569,6 +2067,23 @@
           document.getElementById('new-decision-btn').style.display = 'flex';
           renderDecisionsList();
           populateTagFilter(); // This also updates tag suggestions
+          break;
+          
+        case 'resource-created':
+          resources.push(message.resource);
+          // Reset form
+          resetResourceForm();
+          // Hide form panel and update the list
+          document.getElementById('resource-form-panel').classList.remove('active');
+          // Make sure the New Resource button is visible if we're on resources tab
+          if (activeTab === 'resources') {
+            document.getElementById('new-resource-btn').style.display = 'flex';
+          }
+          renderResourcesList();
+          // Add any new tags to the global tag set
+          if (message.resource.tags) {
+            message.resource.tags.forEach(tag => allUniqueTags.add(tag));
+          }
           break;          case 'decision-updated':
           const index = decisions.findIndex(d => d.id === message.decision.id);
           if (index !== -1) {
@@ -1590,7 +2105,31 @@
           populateTagFilter(); // This also updates tag suggestions
           break;
           
-        case 'decision-deleted':
+        case 'resource-updated':
+          const resourceIndex = resources.findIndex(r => r.id === message.resource.id);
+          if (resourceIndex !== -1) {
+            resources[resourceIndex] = message.resource;
+            
+            // If the detail panel is showing this resource, update it
+            if (currentDetailResourceId === message.resource.id) {
+              viewResourceDetails(message.resource.id);
+            }
+          }
+          // Reset edit mode
+          editingResourceId = null;
+          document.getElementById('save-resource').textContent = 'Save Resource';
+          // Hide form panel and update the list
+          document.getElementById('resource-form-panel').classList.remove('active');
+          // Make sure the New Resource button is visible if we're on resources tab
+          if (activeTab === 'resources') {
+            document.getElementById('new-resource-btn').style.display = 'flex';
+          }
+          renderResourcesList();
+          // Update global tag set
+          if (message.resource.tags) {
+            message.resource.tags.forEach(tag => allUniqueTags.add(tag));
+          }
+          break;          case 'decision-deleted':
           decisions = decisions.filter(d => d.id !== message.id);
           
           // If the detail panel is showing this decision, close it
@@ -1601,6 +2140,18 @@
           
           renderDecisionsList();
           populateTagFilter(); // This also updates tag suggestions
+          break;
+          
+        case 'resource-deleted':
+          resources = resources.filter(r => r.id !== message.id);
+          
+          // If the detail panel is showing this resource, close it
+          if (currentDetailResourceId === message.id) {
+            document.getElementById('resource-detail-panel').classList.remove('active');
+            currentDetailResourceId = null;
+          }
+          
+          renderResourcesList();
           break;
           
         case 'user-info':
@@ -1619,6 +2170,22 @@
     
     // Make sure the New Decision button is initially visible
     document.getElementById('new-decision-btn').style.display = 'flex';
+    
+    // Add some CSS for resource categories
+    const style = document.createElement('style');
+    style.textContent = `
+      .resource-category-tag {
+        background-color: #e9f5ff;
+        color: #007ACC;
+      }
+      .resource-card {
+        border-left: 4px solid #18a0fb;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Request resources data from the plugin
+    parent.postMessage({ pluginMessage: { type: 'get-resources' } }, '*');
     
     // Tag suggestions logic
     document.getElementById('tag-input').addEventListener('input', (e) => {

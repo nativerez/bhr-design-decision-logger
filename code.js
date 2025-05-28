@@ -9,22 +9,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-// In-memory storage for decisions (will be persisted to document storage)
+// In-memory storage for decisions and resources (will be persisted to document storage)
 let decisions = [];
+let resources = [];
 // Constants for plugin storage
 const PLUGIN_NAMESPACE = 'bhrDesignDecisionLogger';
 const DECISIONS_KEY = 'designDecisions';
+const RESOURCES_KEY = 'designResources';
 // Track current document ID to detect file changes
 let currentDocumentId = figma.root.id;
 // Load the HTML UI
 figma.showUI(__html__, { width: 640, height: 840 });
-// Load saved decisions when plugin starts
+// Load saved decisions and resources when plugin starts
 function initializePlugin() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // Update current document ID
             currentDocumentId = figma.root.id;
-            // Load from document storage instead of client storage
+            // Load decisions from document storage
             const savedDecisions = figma.root.getSharedPluginData(PLUGIN_NAMESPACE, DECISIONS_KEY);
             if (savedDecisions) {
                 decisions = JSON.parse(savedDecisions);
@@ -35,13 +37,26 @@ function initializePlugin() {
                 decisions = [];
                 figma.ui.postMessage({ type: 'load-decisions', decisions: [] });
             }
+            // Load resources from document storage
+            const savedResources = figma.root.getSharedPluginData(PLUGIN_NAMESPACE, RESOURCES_KEY);
+            if (savedResources) {
+                resources = JSON.parse(savedResources);
+                figma.ui.postMessage({ type: 'load-resources', resources });
+            }
+            else {
+                // Clear resources if none exist in this document
+                resources = [];
+                figma.ui.postMessage({ type: 'load-resources', resources: [] });
+            }
         }
         catch (error) {
-            console.error('Error loading saved decisions:', error);
-            figma.notify('Error loading saved decisions');
-            // Reset decisions array to be safe
+            console.error('Error loading saved data:', error);
+            figma.notify('Error loading saved data');
+            // Reset arrays to be safe
             decisions = [];
+            resources = [];
             figma.ui.postMessage({ type: 'load-decisions', decisions: [] });
+            figma.ui.postMessage({ type: 'load-resources', resources: [] });
         }
         // Send current selection info to UI
         sendSelectionInfo();
@@ -54,7 +69,18 @@ function saveDecisionsToDocument() {
         return true;
     }
     catch (error) {
-        console.error('Error saving to document storage:', error);
+        console.error('Error saving decisions to document storage:', error);
+        return false;
+    }
+}
+// Function to save resources to document storage
+function saveResourcesToDocument() {
+    try {
+        figma.root.setSharedPluginData(PLUGIN_NAMESPACE, RESOURCES_KEY, JSON.stringify(resources));
+        return true;
+    }
+    catch (error) {
+        console.error('Error saving resources to document storage:', error);
         return false;
     }
 }
@@ -109,10 +135,33 @@ figma.ui.on('message', () => {
 });
 // Handle messages from the UI
 figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     // Check for document change on each message from UI
     checkForDocumentChange();
     switch (msg.type) {
+        case 'create-resource': {
+            // Create a new resource with a unique ID
+            const newResource = {
+                id: Date.now().toString(),
+                title: msg.title,
+                description: msg.description,
+                url: msg.url,
+                category: msg.category,
+                timestamp: Date.now(),
+                author: ((_a = figma.currentUser) === null || _a === void 0 ? void 0 : _a.name) || 'Unknown',
+                tags: msg.tags || []
+            };
+            // Add to our list and save
+            resources.push(newResource);
+            if (saveResourcesToDocument()) {
+                figma.ui.postMessage({ type: 'resource-created', resource: newResource });
+                figma.notify('Resource added successfully');
+            }
+            else {
+                figma.notify('Error saving resource');
+            }
+            break;
+        }
         case 'create-decision': {
             // Create a new decision with a unique ID
             const newDecision = {
@@ -121,7 +170,7 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
                 rationale: msg.rationale,
                 context: msg.context,
                 timestamp: Date.now(),
-                author: ((_a = figma.currentUser) === null || _a === void 0 ? void 0 : _a.name) || 'Unknown',
+                author: ((_b = figma.currentUser) === null || _b === void 0 ? void 0 : _b.name) || 'Unknown',
                 links: msg.links || [],
                 pros: msg.pros || [],
                 cons: msg.cons || [],
@@ -170,12 +219,40 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
             }
             break;
         }
+        case 'edit-resource': {
+            // Find and update the resource
+            const index = resources.findIndex(r => r.id === msg.resource.id);
+            if (index !== -1) {
+                resources[index] = Object.assign(Object.assign({}, msg.resource), { timestamp: Date.now(), author: resources[index].author // Preserve the original author
+                 });
+                if (saveResourcesToDocument()) {
+                    figma.ui.postMessage({ type: 'resource-updated', resource: resources[index] });
+                    figma.notify('Resource updated successfully');
+                }
+                else {
+                    figma.notify('Error updating resource');
+                }
+            }
+            break;
+        }
+        case 'delete-resource': {
+            // Remove the resource
+            resources = resources.filter(r => r.id !== msg.id);
+            if (saveResourcesToDocument()) {
+                figma.ui.postMessage({ type: 'resource-deleted', id: msg.id });
+                figma.notify('Resource deleted successfully');
+            }
+            else {
+                figma.notify('Error deleting resource');
+            }
+            break;
+        }
         case 'get-user-info': {
             // Send back current user info
             figma.ui.postMessage({
                 type: 'user-info',
-                name: (_b = figma.currentUser) === null || _b === void 0 ? void 0 : _b.name,
-                id: (_c = figma.currentUser) === null || _c === void 0 ? void 0 : _c.id
+                name: (_c = figma.currentUser) === null || _c === void 0 ? void 0 : _c.name,
+                id: (_d = figma.currentUser) === null || _d === void 0 ? void 0 : _d.id
             });
             break;
         }
