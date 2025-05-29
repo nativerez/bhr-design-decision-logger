@@ -861,6 +861,8 @@
       if (!editingDecisionId) {
         document.getElementById('form-title').textContent = 'New Decision';
       }
+      // Reset scroll position to the top
+      document.getElementById('decision-form-panel').scrollTop = 0;
       // Show the form panel
       document.getElementById('decision-form-panel').classList.add('active');
       // Hide the "New Decision" button when form is shown
@@ -1836,6 +1838,8 @@
       
       // Change button text and switch to new decision tab
       document.getElementById('save-decision').textContent = 'Update Decision';
+      // Reset scroll position to the top
+      document.getElementById('decision-form-panel').scrollTop = 0;
       document.getElementById('decision-form-panel').classList.add('active');
       
       // Hide the "New Decision" button when editing a decision
