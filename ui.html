@@ -209,6 +209,10 @@
     .figma-node-link .tag:hover {
       background-color: #D4EDFF !important;
     }
+
+    .figma-node-info {
+      margin-bottom: 20px;
+    }
     .decision-header {
       display: flex;
       justify-content: space-between;
@@ -235,6 +239,14 @@
     }
     .section {
       margin-bottom: 20px;
+      padding: 16px;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      background-color: #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      position: relative;
+      transition: all 0.2s ease;
     }
     .filter-bar {
       display: flex;
@@ -448,9 +460,8 @@
       right: -100%;
       width: 100%;
       height: 100%;
-      background: white;
       z-index: 10;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      background-color: #f5f5f5;
       transition: right 0.3s ease;
       display: flex;
       flex-direction: column;
@@ -476,7 +487,7 @@
       padding-bottom: 20px;
     }
     
-    .decision-form-panel form .section,
+    
     .decision-form-panel form .form-group {
       padding-bottom: 5px;
     }
@@ -592,40 +603,42 @@
     
     <form id="decision-form">
       <!-- Figma Element Section -->
-      <div class="section">
-        <h3>Linked Figma Element <span style="color: #888; font-size: 12px; font-weight: normal;">(Optional)</span></h3>
-        <div id="figma-node-info" class="figma-node-info">
-          <div id="no-selection" style="color: #888; font-style: italic;">No element selected. Select a Figma element before creating a decision to link it.</div>
-          <div id="node-selection" style="display: none;">
-            <div class="tag" style="background-color: #E9F5FF; color: #007ACC;">
-              <span id="node-page" style="color: #888; margin-right: 5px; font-size: 11px;"></span>
-              <span id="node-name">Element name</span>
-            </div>
+      
+      <h3>Linked Figma Element</h3>
+      <div id="figma-node-info" class="figma-node-info">
+        <div id="no-selection" style="color: #888; font-style: italic;">No element selected. Select a Figma element before creating a decision to link it.</div>
+        <div id="node-selection" style="display: none;">
+          <div class="tag" style="background-color: #E9F5FF; color: #007ACC;">
+            <span id="node-page" style="color: #888; margin-right: 5px; font-size: 11px;"></span>
+            <span id="node-name">Element name</span>
           </div>
         </div>
       </div>
       
-      <div class="form-group">
-        <label for="title">Decision Title</label>
-        <input type="text" id="title" placeholder="What is the decision about?" required>
-      </div>
-      <div class="form-group">
-        <label for="context">Decision Details</label>
-        <textarea id="context" placeholder="Describe the details of this decision" required></textarea>
-      </div>
-      <div class="form-group">
-        <label for="status">Status</label>
-        <select id="status" required>
-          <option value="proposed">Proposed</option>
-          <option value="accepted">Accepted</option>
-          <option value="rejected">Rejected</option>
-          <option value="deprecated">Deprecated</option>
-          <option value="superseded">Superseded</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="rationale">Rationale</label>
-        <textarea id="rationale" placeholder="Why was this decision made?" required></textarea>
+      
+      <div class="section">
+        <div class="form-group">
+          <label for="title">Decision Title</label>
+          <input type="text" id="title" placeholder="What is the decision about?" required>
+        </div>
+        <div class="form-group">
+          <label for="context">Decision Details</label>
+          <textarea id="context" placeholder="Describe the details of this decision" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" required>
+            <option value="proposed">Proposed</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
+            <option value="deprecated">Deprecated</option>
+            <option value="superseded">Superseded</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="rationale">Rationale</label>
+          <textarea id="rationale" placeholder="Why was this decision made?" required></textarea>
+        </div>
       </div>
       
       <!-- Links Section -->
@@ -700,30 +713,32 @@
     </div>
     
     <form id="resource-form">
-      <div class="form-group">
-        <label for="resource-title">Resource Title</label>
-        <input type="text" id="resource-title" placeholder="Title of the resource" required>
-      </div>
-      
-      <div class="form-group">
-        <label for="resource-description">Description</label>
-        <textarea id="resource-description" placeholder="Describe this resource" required></textarea>
-      </div>
-      
-      <div class="form-group">
-        <label for="resource-url">URL</label>
-        <input type="text" id="resource-url" placeholder="https://..." required>
-      </div>
-      
-      <div class="form-group">
-        <label for="resource-category">Category</label>
-        <select id="resource-category" required>
-          <option value="documentation">Documentation</option>
-          <option value="guidelines">Guidelines</option>
-          <option value="research">Research</option>
-          <option value="reference">Reference</option>
-          <option value="other">Other</option>
-        </select>
+      <div class="section">
+        <div class="form-group">
+          <label for="resource-title">Resource Title</label>
+          <input type="text" id="resource-title" placeholder="Title of the resource" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="resource-description">Description</label>
+          <textarea id="resource-description" placeholder="Describe this resource" required></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="resource-url">URL</label>
+          <input type="text" id="resource-url" placeholder="https://..." required>
+        </div>
+        
+        <div class="form-group">
+          <label for="resource-category">Category</label>
+          <select id="resource-category" required>
+            <option value="documentation">Documentation</option>
+            <option value="guidelines">Guidelines</option>
+            <option value="research">Research</option>
+            <option value="reference">Reference</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
       </div>
       
       <!-- Tags Section -->
