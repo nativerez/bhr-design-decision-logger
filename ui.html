@@ -1323,6 +1323,9 @@
       
       currentDetailResourceId = id;
       
+      // Hide the "New Resource" button when detail panel is shown
+      document.getElementById('new-resource-btn').style.display = 'none';
+      
       // Set details in the panel
       const detailPanel = document.getElementById('resource-detail-panel');
       
@@ -2247,6 +2250,11 @@
           if (currentDetailResourceId === message.id) {
             document.getElementById('resource-detail-panel').classList.remove('active');
             currentDetailResourceId = null;
+            
+            // Make sure the New Resource button is visible if we're on resources tab
+            if (activeTab === 'resources') {
+              document.getElementById('new-resource-btn').style.display = 'flex';
+            }
           }
           
           renderResourcesList();
