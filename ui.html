@@ -928,6 +928,13 @@
     let currentTagSuggestions = []; // Current suggestions based on user input
     let highlightedSuggestionIndex = -1; // Currently highlighted suggestion
     let activeTab = 'decisions'; // Track which tab is currently active
+    let currentDocumentId = null; // Store the current document ID for deep links
+    
+    // Function to request the document ID from the plugin
+    function requestDocumentId() {
+      console.log('Requesting document ID from plugin');
+      parent.postMessage({ pluginMessage: { type: 'get-document-id' } }, '*');
+    }
     
     // Convert decisions to markdown format
     function convertDecisionsToMarkdown(decisionsToConvert = decisions) {
@@ -936,6 +943,9 @@
       // Add timestamp for when the export was created
       const exportDate = new Date().toLocaleString();
       markdown += `*Exported on: ${exportDate}*\n\n`;
+      
+      // Debug information about document ID
+      console.log('Document ID when generating markdown:', currentDocumentId);
       
       // Sort decisions by newest first by default
       const sortedDecisions = [...decisionsToConvert].sort((a, b) => b.timestamp - a.timestamp);
@@ -947,13 +957,21 @@
         // Decision title with status
         markdown += `## ${decision.title} [${decision.status || 'Proposed'}]\n\n`;
         
+        // Add Figma link on a separate line right after the title
+        if (decision.nodeId && currentDocumentId) {
+          // Create a deep link to the Figma element using the figma:// protocol
+          const figmaDeepLink = `figma://file/${currentDocumentId}?node-id=${decision.nodeId}`;
+          markdown += `[View in Figma](${figmaDeepLink})\n\n`;
+        }
+        
         // Author and date
         markdown += `**Author:** ${decision.author}  \n`;
         markdown += `**Date:** ${decisionDate}  \n`;
         
         // Add linked Figma element if present
-        if (decision.nodeId && decision.nodeName) {
-          markdown += `**Linked Element:** ${decision.nodeName}${decision.pageName ? ' (Page: ' + decision.pageName + ')' : ''}  \n`;
+        if (decision.nodeId && decision.nodeName && currentDocumentId) {
+          const figmaDeepLink = `figma://file/${currentDocumentId}?node-id=${decision.nodeId}`;
+          markdown += `**Linked Element:** [${decision.nodeName}](${figmaDeepLink})${decision.pageName ? ' (Page: ' + decision.pageName + ')' : ''}  \n`;
         }
         
         // Add tags if present
@@ -1010,6 +1028,33 @@
     
     // Copy markdown to clipboard
     function copyToClipboard(text) {
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          navigator.clipboard.writeText(text)
+            .then(() => {
+              console.log('Copied to clipboard using Clipboard API');
+              return true;
+            })
+            .catch(err => {
+              console.error('Error using Clipboard API:', err);
+              // Fall back to execCommand approach
+              return legacyCopyToClipboard(text);
+            });
+          return true;
+        } catch (err) {
+          console.error('Error with Clipboard API:', err);
+          // Fall back to execCommand approach
+          return legacyCopyToClipboard(text);
+        }
+      } else {
+        // Use legacy approach
+        return legacyCopyToClipboard(text);
+      }
+    }
+    
+    // Legacy clipboard copy method
+    function legacyCopyToClipboard(text) {
       const textarea = document.createElement('textarea');
       textarea.value = text;
       textarea.style.position = 'fixed';  // Avoid scrolling to bottom
@@ -1019,13 +1064,14 @@
       try {
         const successful = document.execCommand('copy');
         if (successful) {
+          console.log('Copied to clipboard using execCommand');
           return true;
         } else {
-          console.error('Unable to copy to clipboard');
+          console.error('Unable to copy to clipboard with execCommand');
           return false;
         }
       } catch (err) {
-        console.error('Error copying to clipboard:', err);
+        console.error('Error copying to clipboard with execCommand:', err);
         return false;
       } finally {
         document.body.removeChild(textarea);
@@ -1113,6 +1159,9 @@
     
     // Get current user info
     parent.postMessage({ pluginMessage: { type: 'get-user-info' } }, '*');
+    
+    // Request the document ID explicitly
+    requestDocumentId();
     
     // Tab switching functionality
     document.querySelectorAll('.tab').forEach(tab => {
@@ -2414,6 +2463,11 @@
       switch (message.type) {
         case 'load-decisions':
           decisions = message.decisions || [];
+          // Store the document ID for deep links
+          if (message.documentId) {
+            currentDocumentId = message.documentId;
+            console.log('Received document ID:', currentDocumentId);
+          }
           renderDecisionsList();
           populateTagFilter(); // This now also extracts all unique tags for autocomplete
           break;
@@ -2550,6 +2604,11 @@
             name: message.name,
             id: message.id
           };
+          break;
+          
+        case 'document-id':
+          currentDocumentId = message.documentId;
+          console.log('Received document ID via explicit request:', currentDocumentId);
           break;
       }
     };

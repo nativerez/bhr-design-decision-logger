@@ -30,12 +30,20 @@ function initializePlugin() {
             const savedDecisions = figma.root.getSharedPluginData(PLUGIN_NAMESPACE, DECISIONS_KEY);
             if (savedDecisions) {
                 decisions = JSON.parse(savedDecisions);
-                figma.ui.postMessage({ type: 'load-decisions', decisions });
+                figma.ui.postMessage({
+                    type: 'load-decisions',
+                    decisions,
+                    documentId: currentDocumentId
+                });
             }
             else {
                 // Clear decisions if none exist in this document
                 decisions = [];
-                figma.ui.postMessage({ type: 'load-decisions', decisions: [] });
+                figma.ui.postMessage({
+                    type: 'load-decisions',
+                    decisions: [],
+                    documentId: currentDocumentId
+                });
             }
             // Load resources from document storage
             const savedResources = figma.root.getSharedPluginData(PLUGIN_NAMESPACE, RESOURCES_KEY);
@@ -254,6 +262,15 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
                 name: (_c = figma.currentUser) === null || _c === void 0 ? void 0 : _c.name,
                 id: (_d = figma.currentUser) === null || _d === void 0 ? void 0 : _d.id
             });
+            break;
+        }
+        case 'get-document-id': {
+            // Send back current document ID
+            figma.ui.postMessage({
+                type: 'document-id',
+                documentId: figma.root.id
+            });
+            console.log('Sending document ID to UI:', figma.root.id);
             break;
         }
         case 'navigate-to-node': {

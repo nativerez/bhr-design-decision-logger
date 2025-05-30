@@ -55,11 +55,19 @@ async function initializePlugin() {
     const savedDecisions = figma.root.getSharedPluginData(PLUGIN_NAMESPACE, DECISIONS_KEY);
     if (savedDecisions) {
       decisions = JSON.parse(savedDecisions);
-      figma.ui.postMessage({ type: 'load-decisions', decisions });
+      figma.ui.postMessage({ 
+        type: 'load-decisions', 
+        decisions,
+        documentId: currentDocumentId 
+      });
     } else {
       // Clear decisions if none exist in this document
       decisions = [];
-      figma.ui.postMessage({ type: 'load-decisions', decisions: [] });
+      figma.ui.postMessage({ 
+        type: 'load-decisions', 
+        decisions: [],
+        documentId: currentDocumentId 
+      });
     }
     
     // Load resources from document storage
@@ -291,6 +299,16 @@ figma.ui.onmessage = async (msg) => {
         name: figma.currentUser?.name,
         id: figma.currentUser?.id
       });
+      break;
+    }
+    
+    case 'get-document-id': {
+      // Send back current document ID
+      figma.ui.postMessage({
+        type: 'document-id',
+        documentId: figma.root.id
+      });
+      console.log('Sending document ID to UI:', figma.root.id);
       break;
     }
     

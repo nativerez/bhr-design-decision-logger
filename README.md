@@ -71,6 +71,7 @@ Two options available:
 - Copy to clipboard: Quickly copy all decisions as formatted Markdown
 - Download as file: Save a Markdown file with all decisions documented
 All current filters are respected during export (search terms, tags, status)
+Decision titles and linked elements include Figma deep links that open directly in Figma
 
 ## Development
 
