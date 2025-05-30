@@ -186,22 +186,43 @@
       border: 1px solid #e5e5e5;
       border-radius: 4px;
       margin-bottom: 16px;
-      background-color: #fff;
+      background-color: #fff !important;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       position: relative;
       transition: all 0.2s ease;
+      border-left-width: 4px;
     }
     
     .decision-card:hover {
       box-shadow: 0 3px 8px rgba(0,0,0,0.1);
       transform: translateY(-2px);
-      border-color: #d0d0d0;
+      border-top-color: #d0d0d0;
+      border-right-color: #d0d0d0;
+      border-bottom-color: #d0d0d0;
+      /* Left border color preserved for status */
     }
     
     /* Enhanced styling for better clickable affordance */
     .decision-card {
       cursor: pointer;
       transition: all 0.2s ease;
+    }
+    
+    /* Status border colors for decision cards */
+    .decision-card.status-proposed {
+      border-left-color: #0D47A1; /* Blue for proposed */
+    }
+    .decision-card.status-accepted {
+      border-left-color: #1B5E20; /* Green for accepted */
+    }
+    .decision-card.status-rejected {
+      border-left-color: #B71C1C; /* Red for rejected */
+    }
+    .decision-card.status-deprecated {
+      border-left-color: #3E2723; /* Brown for deprecated */
+    }
+    .decision-card.status-superseded {
+      border-left-color: #4A148C; /* Purple for superseded */
     }
     
     .figma-node-link .tag:hover {
@@ -220,6 +241,7 @@
       font-weight: 600;
       font-size: 16px;
       padding-right: 75px; /* Make room for the status badge */
+      color: #000;
     }
     .decision-meta {
       font-size: 12px;
@@ -229,6 +251,7 @@
     .decision-context {
       font-size: 14px;
       margin-bottom: 10px;
+      color: #000;
     }
     .decision-actions {
       margin-top: 12px;
@@ -1580,6 +1603,8 @@
       decisionsToRender.forEach(decision => {
         const card = document.createElement('div');
         card.classList.add('decision-card');
+        // Add status class for left border color
+        card.classList.add('status-' + (decision.status || 'proposed').toLowerCase());
         // Make the entire card clickable by adding cursor pointer style
         card.style.cursor = 'pointer';
         
