@@ -52,6 +52,25 @@
     .tab-content.active {
       display: block !important; /* Use !important to override any other styles */
     }
+    
+    /* Export buttons styling */
+    .export-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+      gap: 8px;
+    }
+    
+    .export-actions .button {
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+    }
+    
+    .export-actions .button:hover {
+      background-color: #f0f0f0;
+    }
+    
     .form-group {
       margin-bottom: 16px;
     }
@@ -578,6 +597,10 @@
         <option value="za">Z-A</option>
       </select>
     </div>
+    <div class="export-actions" style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+      <button id="copy-markdown-btn" class="button secondary" title="Copy all decisions as markdown to clipboard">Copy as Markdown</button>
+      <button id="download-markdown-btn" class="button secondary" style="margin-left: 8px;" title="Download all decisions as markdown file">Download as Markdown</button>
+    </div>
     <div class="decision-list" id="decision-list">
       <!-- Decision cards will be inserted here -->
       <div class="empty-state">No decisions recorded yet.</div>
@@ -905,6 +928,188 @@
     let currentTagSuggestions = []; // Current suggestions based on user input
     let highlightedSuggestionIndex = -1; // Currently highlighted suggestion
     let activeTab = 'decisions'; // Track which tab is currently active
+    
+    // Convert decisions to markdown format
+    function convertDecisionsToMarkdown(decisionsToConvert = decisions) {
+      let markdown = `# Design Decisions\n\n`;
+      
+      // Add timestamp for when the export was created
+      const exportDate = new Date().toLocaleString();
+      markdown += `*Exported on: ${exportDate}*\n\n`;
+      
+      // Sort decisions by newest first by default
+      const sortedDecisions = [...decisionsToConvert].sort((a, b) => b.timestamp - a.timestamp);
+      
+      sortedDecisions.forEach((decision, index) => {
+        // Format the decision date
+        const decisionDate = new Date(decision.timestamp).toLocaleString();
+        
+        // Decision title with status
+        markdown += `## ${decision.title} [${decision.status || 'Proposed'}]\n\n`;
+        
+        // Author and date
+        markdown += `**Author:** ${decision.author}  \n`;
+        markdown += `**Date:** ${decisionDate}  \n`;
+        
+        // Add linked Figma element if present
+        if (decision.nodeId && decision.nodeName) {
+          markdown += `**Linked Element:** ${decision.nodeName}${decision.pageName ? ' (Page: ' + decision.pageName + ')' : ''}  \n`;
+        }
+        
+        // Add tags if present
+        if (decision.tags && decision.tags.length > 0) {
+          markdown += `**Tags:** ${decision.tags.join(', ')}  \n`;
+        }
+        
+        markdown += '\n';
+        
+        // Decision details
+        markdown += `### Decision Details\n\n${decision.context}\n\n`;
+        
+        // Rationale
+        markdown += `### Rationale\n\n${decision.rationale}\n\n`;
+        
+        // Links section
+        if (decision.links && decision.links.length > 0) {
+          markdown += `### Links & References\n\n`;
+          decision.links.forEach(link => {
+            markdown += `- [${link.title}](${link.url})\n`;
+          });
+          markdown += '\n';
+        }
+        
+        // Pros & Cons section
+        if ((decision.pros && decision.pros.length > 0) || (decision.cons && decision.cons.length > 0)) {
+          markdown += `### Pros & Cons\n\n`;
+          
+          if (decision.pros && decision.pros.length > 0) {
+            markdown += `#### Pros\n\n`;
+            decision.pros.forEach(pro => {
+              markdown += `- ${pro}\n`;
+            });
+            markdown += '\n';
+          }
+          
+          if (decision.cons && decision.cons.length > 0) {
+            markdown += `#### Cons\n\n`;
+            decision.cons.forEach(con => {
+              markdown += `- ${con}\n`;
+            });
+            markdown += '\n';
+          }
+        }
+        
+        // Add separator between decisions except for the last one
+        if (index < sortedDecisions.length - 1) {
+          markdown += `---\n\n`;
+        }
+      });
+      
+      return markdown;
+    }
+    
+    // Copy markdown to clipboard
+    function copyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';  // Avoid scrolling to bottom
+      document.body.appendChild(textarea);
+      textarea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          return true;
+        } else {
+          console.error('Unable to copy to clipboard');
+          return false;
+        }
+      } catch (err) {
+        console.error('Error copying to clipboard:', err);
+        return false;
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    }
+    
+    // Download markdown as a file
+    function downloadMarkdownFile(markdown) {
+      const filename = `design-decisions-${new Date().toISOString().slice(0, 10)}.md`;
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+    }
+    
+    // Event listener for Copy as Markdown button
+    document.getElementById('copy-markdown-btn').addEventListener('click', () => {
+      // Get currently filtered decisions
+      const searchText = document.getElementById('search-input').value.toLowerCase();
+      const tagFilter = document.getElementById('filter-tags').value;
+      const statusFilter = document.getElementById('filter-status').value;
+      
+      const filteredDecisions = decisions.filter(decision => {
+        // Search text filter
+        const matchesSearch = searchText === '' || 
+          decision.title.toLowerCase().includes(searchText) || 
+          decision.context.toLowerCase().includes(searchText) || 
+          decision.rationale.toLowerCase().includes(searchText);
+        
+        // Tag filter
+        const matchesTag = tagFilter === '' || 
+          (decision.tags && decision.tags.includes(tagFilter));
+        
+        // Status filter
+        const matchesStatus = statusFilter === '' || decision.status === statusFilter;
+        
+        return matchesSearch && matchesTag && matchesStatus;
+      });
+      
+      const markdown = convertDecisionsToMarkdown(filteredDecisions);
+      if (copyToClipboard(markdown)) {
+        alert('Decisions copied to clipboard as Markdown!');
+      } else {
+        alert('Failed to copy to clipboard. Your browser may not support this feature.');
+      }
+    });
+    
+    // Event listener for Download as Markdown button
+    document.getElementById('download-markdown-btn').addEventListener('click', () => {
+      // Get currently filtered decisions
+      const searchText = document.getElementById('search-input').value.toLowerCase();
+      const tagFilter = document.getElementById('filter-tags').value;
+      const statusFilter = document.getElementById('filter-status').value;
+      
+      const filteredDecisions = decisions.filter(decision => {
+        // Search text filter
+        const matchesSearch = searchText === '' || 
+          decision.title.toLowerCase().includes(searchText) || 
+          decision.context.toLowerCase().includes(searchText) || 
+          decision.rationale.toLowerCase().includes(searchText);
+        
+        // Tag filter
+        const matchesTag = tagFilter === '' || 
+          (decision.tags && decision.tags.includes(tagFilter));
+        
+        // Status filter
+        const matchesStatus = statusFilter === '' || decision.status === statusFilter;
+        
+        return matchesSearch && matchesTag && matchesStatus;
+      });
+      
+      const markdown = convertDecisionsToMarkdown(filteredDecisions);
+      downloadMarkdownFile(markdown);
+    });
     
     // Get current user info
     parent.postMessage({ pluginMessage: { type: 'get-user-info' } }, '*');
