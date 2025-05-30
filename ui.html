@@ -596,10 +596,10 @@
         <option value="az">A-Z</option>
         <option value="za">Z-A</option>
       </select>
-    </div>
-    <div class="export-actions" style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+    </div>      <div class="export-actions" style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
       <button id="copy-markdown-btn" class="button secondary" title="Copy all decisions as markdown to clipboard">Copy as Markdown</button>
       <button id="download-markdown-btn" class="button secondary" style="margin-left: 8px;" title="Download all decisions as markdown file">Download as Markdown</button>
+      <button id="debug-doc-id-btn" class="button secondary" style="margin-left: 8px; background-color: #f1f1f1; border: 1px dashed #999;" title="Debug: Get Document ID">Debug ID</button>
     </div>
     <div class="decision-list" id="decision-list">
       <!-- Decision cards will be inserted here -->
@@ -929,11 +929,60 @@
     let highlightedSuggestionIndex = -1; // Currently highlighted suggestion
     let activeTab = 'decisions'; // Track which tab is currently active
     let currentDocumentId = null; // Store the current document ID for deep links
+    let currentFileName = 'Untitled'; // Store the current file name for URLs
     
     // Function to request the document ID from the plugin
     function requestDocumentId() {
       console.log('Requesting document ID from plugin');
       parent.postMessage({ pluginMessage: { type: 'get-document-id' } }, '*');
+    }
+    
+    // Manually force a known document ID (for testing)
+    function forceDocumentId(id) {
+      currentDocumentId = id;
+      console.log('🔧 Manually forced document ID to:', currentDocumentId);
+      return currentDocumentId;
+    }
+    
+    // Set file name (used by the URL formatter)
+    function setFileName(fileName) {
+      currentFileName = fileName || 'Untitled';
+      console.log('File name set to:', currentFileName);
+      return currentFileName;
+    }
+    
+    // Debug utility function to check document ID and decisions state
+    function debugState() {
+      console.group('🔍 Debug State');
+      console.log('Current document ID:', currentDocumentId);
+      console.log('Current file name:', currentFileName);
+      console.log('Has decisions:', decisions.length > 0);
+      if (decisions.length > 0) {
+        console.log('First decision:', {
+          id: decisions[0].id,
+          title: decisions[0].title,
+          nodeId: decisions[0].nodeId,
+          nodeName: decisions[0].nodeName
+        });
+        
+        // Check if at least one decision has a nodeId
+        const hasNodeIds = decisions.some(d => d.nodeId);
+        console.log('At least one decision has nodeId:', hasNodeIds);
+        
+        if (hasNodeIds) {
+          // Show first decision with a nodeId
+          const decisionWithNodeId = decisions.find(d => d.nodeId);
+          if (decisionWithNodeId) {
+            console.log('Example decision with nodeId:', {
+              id: decisionWithNodeId.id,
+              title: decisionWithNodeId.title,
+              nodeId: decisionWithNodeId.nodeId,
+              nodeName: decisionWithNodeId.nodeName
+            });
+          }
+        }
+      }
+      console.groupEnd();
     }
     
     // Convert decisions to markdown format
@@ -943,6 +992,9 @@
       // Add timestamp for when the export was created
       const exportDate = new Date().toLocaleString();
       markdown += `*Exported on: ${exportDate}*\n\n`;
+      
+      // Run debug state check
+      debugState();
       
       // Debug information about document ID
       console.log('Document ID when generating markdown:', currentDocumentId);
@@ -959,9 +1011,11 @@
         
         // Add Figma link on a separate line right after the title
         if (decision.nodeId && currentDocumentId) {
-          // Create a deep link to the Figma element using the figma:// protocol
-          const figmaDeepLink = `figma://file/${currentDocumentId}?node-id=${decision.nodeId}`;
-          markdown += `[View in Figma](${figmaDeepLink})\n\n`;
+          // Format the file name for URL (encode spaces as dashes)
+          const formattedFileName = currentFileName.replace(/\s+/g, '-');
+          // Create a web-friendly link to the Figma element using the exact format
+          const figmaWebLink = `https://www.figma.com/design/${currentDocumentId}/${formattedFileName}?node-id=${decision.nodeId}&t=KQ92N16ekTbaLvJw-1`;
+          markdown += `[View in Figma](${figmaWebLink})\n\n`;
         }
         
         // Author and date
@@ -970,8 +1024,11 @@
         
         // Add linked Figma element if present
         if (decision.nodeId && decision.nodeName && currentDocumentId) {
-          const figmaDeepLink = `figma://file/${currentDocumentId}?node-id=${decision.nodeId}`;
-          markdown += `**Linked Element:** [${decision.nodeName}](${figmaDeepLink})${decision.pageName ? ' (Page: ' + decision.pageName + ')' : ''}  \n`;
+          // Format the file name for URL (encode spaces as dashes)
+          const formattedFileName = currentFileName.replace(/\s+/g, '-');
+          // Create a web-friendly link to the Figma element using the exact format
+          const figmaWebLink = `https://www.figma.com/design/${currentDocumentId}/${formattedFileName}?node-id=${decision.nodeId}&t=KQ92N16ekTbaLvJw-1`;
+          markdown += `**Linked Element:** [${decision.nodeName}](${figmaWebLink})${decision.pageName ? ' (Page: ' + decision.pageName + ')' : ''}  \n`;
         }
         
         // Add tags if present
@@ -991,7 +1048,22 @@
         if (decision.links && decision.links.length > 0) {
           markdown += `### Links & References\n\n`;
           decision.links.forEach(link => {
-            markdown += `- [${link.title}](${link.url})\n`;
+            // Ensure the URL is valid and properly formatted
+            let url = link.url;
+            
+            // If URL is empty, # or undefined, use a placeholder
+            if (!url || url === '#') {
+              url = 'https://missing-url.com';
+            }
+            // If URL doesn't have protocol, add https://
+            else if (!/^https?:\/\//i.test(url)) {
+              url = 'https://' + url;
+            }
+            
+            // Log the URL for debugging
+            console.log(`Link URL for "${link.title}":`, url);
+            
+            markdown += `- [${link.title}](${url})\n`;
           });
           markdown += '\n';
         }
@@ -1104,6 +1176,8 @@
       const tagFilter = document.getElementById('filter-tags').value;
       const statusFilter = document.getElementById('filter-status').value;
       
+      console.log('Copy as Markdown - Current document ID:', currentDocumentId);
+      
       const filteredDecisions = decisions.filter(decision => {
         // Search text filter
         const matchesSearch = searchText === '' || 
@@ -1119,6 +1193,14 @@
         const matchesStatus = statusFilter === '' || decision.status === statusFilter;
         
         return matchesSearch && matchesTag && matchesStatus;
+      });
+      
+      // Log information about decisions being exported
+      console.log('Copy as Markdown - Filtered decisions for export:', filteredDecisions.length);
+      filteredDecisions.forEach((decision, index) => {
+        console.log(`Decision ${index+1}:`, decision.title);
+        console.log(`  Has nodeId:`, !!decision.nodeId);
+        console.log(`  Has nodeName:`, !!decision.nodeName);
       });
       
       const markdown = convertDecisionsToMarkdown(filteredDecisions);
@@ -1155,6 +1237,26 @@
       
       const markdown = convertDecisionsToMarkdown(filteredDecisions);
       downloadMarkdownFile(markdown);
+    });
+    
+    // Event listener for Debug Document ID button
+    document.getElementById('debug-doc-id-btn').addEventListener('click', () => {
+      // Show current state
+      debugState();
+      
+      // If document ID is missing, ask user to enter it
+      if (!currentDocumentId) {
+        const manualDocId = prompt('Enter the document ID manually:');
+        if (manualDocId) {
+          forceDocumentId(manualDocId);
+          alert('Document ID set to: ' + manualDocId + '\nTry exporting again.');
+        }
+      } else {
+        alert('Current document ID: ' + currentDocumentId);
+      }
+      
+      // Request it again from the plugin anyway
+      requestDocumentId();
     });
     
     // Get current user info
@@ -1655,7 +1757,20 @@
       
       // Set link
       const linkElement = document.getElementById('resource-detail-link');
-      linkElement.href = resource.url;
+      
+      // Ensure the URL is valid and properly formatted
+      let url = resource.url;
+      
+      // If URL is empty, # or undefined, use a placeholder
+      if (!url || url === '#') {
+        url = 'https://missing-url.com';
+      }
+      // If URL doesn't have protocol, add https://
+      else if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url;
+      }
+      
+      linkElement.href = url;
       linkElement.textContent = resource.title;
       
       // Tags section
@@ -1679,7 +1794,19 @@
       // Set up visit button
       const visitButton = document.getElementById('resource-detail-visit-button');
       visitButton.onclick = () => {
-        window.open(resource.url, '_blank');
+        // Ensure the URL is valid and properly formatted
+        let url = resource.url;
+        
+        // If URL is empty, # or undefined, use a placeholder
+        if (!url || url === '#') {
+          url = 'https://missing-url.com';
+        }
+        // If URL doesn't have protocol, add https://
+        else if (!/^https?:\/\//i.test(url)) {
+          url = 'https://' + url;
+        }
+        
+        window.open(url, '_blank');
       };
       
       // Set up action buttons - first remove any existing event listeners by cloning and replacing
@@ -1948,6 +2075,7 @@
       document.getElementById('detail-title').textContent = decision.title;
       
       // Set status with proper styling
+     
       const statusElement = document.getElementById('detail-status');
       const statusText = decision.status || 'Proposed';
       const statusClass = `status-${statusText.toLowerCase()}`;
@@ -1997,7 +2125,7 @@
         prosList.innerHTML = '';
         if (decision.pros && decision.pros.length > 0) {
           decision.pros.forEach(pro => {
-            const li = document.createElement('li');
+                       const li = document.createElement('li');
             li.textContent = pro;
             prosList.appendChild(li);
           });
@@ -2468,6 +2596,11 @@
             currentDocumentId = message.documentId;
             console.log('Received document ID:', currentDocumentId);
           }
+          // Store the file name for URLs
+          if (message.fileName) {
+            setFileName(message.fileName);
+            console.log('Received file name:', message.fileName);
+          }
           renderDecisionsList();
           populateTagFilter(); // This now also extracts all unique tags for autocomplete
           break;
@@ -2608,6 +2741,10 @@
           
         case 'document-id':
           currentDocumentId = message.documentId;
+          if (message.fileName) {
+            setFileName(message.fileName);
+            console.log('Received file name:', message.fileName);
+          }
           console.log('Received document ID via explicit request:', currentDocumentId);
           break;
       }

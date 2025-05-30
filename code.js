@@ -17,7 +17,7 @@ const PLUGIN_NAMESPACE = 'bhrDesignDecisionLogger';
 const DECISIONS_KEY = 'designDecisions';
 const RESOURCES_KEY = 'designResources';
 // Track current document ID to detect file changes
-let currentDocumentId = figma.root.id;
+let currentDocumentId = figma.fileKey || figma.root.id;
 // Load the HTML UI
 figma.showUI(__html__, { width: 640, height: 840 });
 // Load saved decisions and resources when plugin starts
@@ -25,7 +25,7 @@ function initializePlugin() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // Update current document ID
-            currentDocumentId = figma.root.id;
+            currentDocumentId = figma.fileKey || figma.root.id;
             // Load decisions from document storage
             const savedDecisions = figma.root.getSharedPluginData(PLUGIN_NAMESPACE, DECISIONS_KEY);
             if (savedDecisions) {
@@ -33,7 +33,8 @@ function initializePlugin() {
                 figma.ui.postMessage({
                     type: 'load-decisions',
                     decisions,
-                    documentId: currentDocumentId
+                    documentId: currentDocumentId,
+                    fileName: figma.root.name || 'Untitled'
                 });
             }
             else {
@@ -42,7 +43,8 @@ function initializePlugin() {
                 figma.ui.postMessage({
                     type: 'load-decisions',
                     decisions: [],
-                    documentId: currentDocumentId
+                    documentId: currentDocumentId,
+                    fileName: figma.root.name || 'Untitled'
                 });
             }
             // Load resources from document storage
@@ -123,7 +125,7 @@ function sendSelectionInfo() {
 }
 // Check if we've switched to a different document and reload decisions if needed
 function checkForDocumentChange() {
-    if (currentDocumentId !== figma.root.id) {
+    if (currentDocumentId !== (figma.fileKey || figma.root.id)) {
         console.log('Document changed, reloading decisions');
         initializePlugin();
     }
@@ -265,12 +267,16 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
             break;
         }
         case 'get-document-id': {
-            // Send back current document ID
+            // Send back current document ID and file name
+            const fileName = figma.root.name || 'Untitled';
+            const documentId = figma.fileKey || figma.root.id;
             figma.ui.postMessage({
                 type: 'document-id',
-                documentId: figma.root.id
+                documentId: documentId,
+                fileName: fileName
             });
-            console.log('Sending document ID to UI:', figma.root.id);
+            console.log('Sending document ID to UI:', documentId);
+            console.log('Sending file name to UI:', fileName);
             break;
         }
         case 'navigate-to-node': {

@@ -40,7 +40,7 @@ const DECISIONS_KEY = 'designDecisions';
 const RESOURCES_KEY = 'designResources';
 
 // Track current document ID to detect file changes
-let currentDocumentId: string = figma.root.id;
+let currentDocumentId: string = figma.fileKey || figma.root.id;
 
 // Load the HTML UI
 figma.showUI(__html__, { width: 640, height: 840 });
@@ -49,7 +49,7 @@ figma.showUI(__html__, { width: 640, height: 840 });
 async function initializePlugin() {
   try {
     // Update current document ID
-    currentDocumentId = figma.root.id;
+    currentDocumentId = figma.fileKey || figma.root.id;
     
     // Load decisions from document storage
     const savedDecisions = figma.root.getSharedPluginData(PLUGIN_NAMESPACE, DECISIONS_KEY);
@@ -58,7 +58,8 @@ async function initializePlugin() {
       figma.ui.postMessage({ 
         type: 'load-decisions', 
         decisions,
-        documentId: currentDocumentId 
+        documentId: currentDocumentId,
+        fileName: figma.root.name || 'Untitled'
       });
     } else {
       // Clear decisions if none exist in this document
@@ -66,7 +67,8 @@ async function initializePlugin() {
       figma.ui.postMessage({ 
         type: 'load-decisions', 
         decisions: [],
-        documentId: currentDocumentId 
+        documentId: currentDocumentId,
+        fileName: figma.root.name || 'Untitled'
       });
     }
     
@@ -146,7 +148,7 @@ function sendSelectionInfo() {
 
 // Check if we've switched to a different document and reload decisions if needed
 function checkForDocumentChange() {
-  if (currentDocumentId !== figma.root.id) {
+  if (currentDocumentId !== (figma.fileKey || figma.root.id)) {
     console.log('Document changed, reloading decisions');
     initializePlugin();
   }
@@ -303,12 +305,16 @@ figma.ui.onmessage = async (msg) => {
     }
     
     case 'get-document-id': {
-      // Send back current document ID
+      // Send back current document ID and file name
+      const fileName = figma.root.name || 'Untitled';
+      const documentId = figma.fileKey || figma.root.id;
       figma.ui.postMessage({
         type: 'document-id',
-        documentId: figma.root.id
+        documentId: documentId,
+        fileName: fileName
       });
-      console.log('Sending document ID to UI:', figma.root.id);
+      console.log('Sending document ID to UI:', documentId);
+      console.log('Sending file name to UI:', fileName);
       break;
     }
     

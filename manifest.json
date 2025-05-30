@@ -5,6 +5,7 @@
   "main": "code.js",
   "capabilities": [],
   "enableProposedApi": false,
+  "enablePrivatePluginApi": true,
   "documentAccess": "dynamic-page",
   "editorType": [
     "figma"

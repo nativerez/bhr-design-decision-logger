@@ -9,6 +9,7 @@ A plugin that allows designers to log, track and share design decisions within F
 - **Timestamp & Author Tracking**: Automatic logging of when and by whom decisions are made
 - **View Decision History**: Chronological listing of all recorded decisions
 - **Link to Artifacts**: Attach URLs to external resources like Jira tickets, research docs, etc.
+- **Link to Figma Elements**: Generate proper links to Figma elements using the format: `https://www.figma.com/design/[documentId]/[fileName]?node-id=[nodeId]`
 - **Pros & Cons Documentation**: Structured way to compare multiple approaches
 - **Categorization**: Tag decisions with categories for better organization
 - **Edit/Delete Capabilities**: Update or remove decisions as needed
@@ -71,7 +72,10 @@ Two options available:
 - Copy to clipboard: Quickly copy all decisions as formatted Markdown
 - Download as file: Save a Markdown file with all decisions documented
 All current filters are respected during export (search terms, tags, status)
-Decision titles and linked elements include Figma deep links that open directly in Figma
+Decision titles and linked elements include Figma web links that open directly in a browser
+Links use the format: https://www.figma.com/design/[documentId]/[fileName]?node-id=[nodeId]
+File names are properly formatted (spaces converted to dashes) and document IDs are automatically captured
+URLs are automatically validated and formatted to ensure proper links in the markdown output
 
 ## Development
 
@@ -105,6 +109,13 @@ Future versions will support:
 - Comments and reactions on decisions
 - Notifications when decisions relevant to your work are made
 - Integration with design system versioning
+
+## Changelog
+
+### v1.1.0 - May 30, 2025
+- **Fixed**: Document ID issue where links were using "0:0" instead of the actual file key
+- **Improved**: URL format now properly includes file name in the Figma element links
+- **Enhanced**: Better handling of file name formatting in URLs (spaces converted to dashes)
 
 ## License
 
