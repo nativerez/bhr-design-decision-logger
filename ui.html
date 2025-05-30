@@ -580,7 +580,6 @@
     </div>      <div class="export-actions" style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
       <button id="copy-markdown-btn" class="button secondary" title="Copy all decisions as markdown to clipboard">Copy as Markdown</button>
       <button id="download-markdown-btn" class="button secondary" style="margin-left: 8px;" title="Download all decisions as markdown file">Download as Markdown</button>
-      <button id="debug-doc-id-btn" class="button secondary" style="margin-left: 8px; background-color: #f1f1f1; border: 1px dashed #999;" title="Debug: Get Document ID">Debug ID</button>
     </div>
     <div class="decision-list" id="decision-list">
       <!-- Decision cards will be inserted here -->
@@ -1220,25 +1219,8 @@
       downloadMarkdownFile(markdown);
     });
     
-    // Event listener for Debug Document ID button
-    document.getElementById('debug-doc-id-btn').addEventListener('click', () => {
-      // Show current state
-      debugState();
-      
-      // If document ID is missing, ask user to enter it
-      if (!currentDocumentId) {
-        const manualDocId = prompt('Enter the document ID manually:');
-        if (manualDocId) {
-          forceDocumentId(manualDocId);
-          alert('Document ID set to: ' + manualDocId + '\nTry exporting again.');
-        }
-      } else {
-        alert('Current document ID: ' + currentDocumentId);
-      }
-      
-      // Request it again from the plugin anyway
-      requestDocumentId();
-    });
+    // Request the document ID automatically
+    requestDocumentId();
     
     // Get current user info
     parent.postMessage({ pluginMessage: { type: 'get-user-info' } }, '*');
