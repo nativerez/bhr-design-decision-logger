@@ -64,7 +64,15 @@
     .export-actions .button {
       display: flex;
       align-items: center;
+      justify-content: center;
       font-size: 13px;
+      padding: 8px 12px;
+      min-width: 40px;
+    }
+    
+    .export-actions .button svg {
+      width: 16px;
+      height: 16px;
     }
     
     .export-actions .button:hover {
@@ -578,8 +586,12 @@
         <option value="za">Z-A</option>
       </select>
     </div>      <div class="export-actions" style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-      <button id="copy-markdown-btn" class="button secondary" title="Copy all decisions as markdown to clipboard">Copy as Markdown</button>
-      <button id="download-markdown-btn" class="button secondary" style="margin-left: 8px;" title="Download all decisions as markdown file">Download as Markdown</button>
+      <button id="copy-markdown-btn" class="button secondary" title="Copy all decisions as markdown to clipboard">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-copy-icon lucide-clipboard-copy"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M16 4h2a2 2 0 0 1 2 2v4"/><path d="M21 14H11"/><path d="m15 10-4 4 4 4"/></svg>
+      </button>
+      <button id="download-markdown-btn" class="button secondary" style="margin-left: 8px;" title="Download all decisions as markdown file">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download-icon lucide-download"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
+      </button>
     </div>
     <div class="decision-list" id="decision-list">
       <!-- Decision cards will be inserted here -->
