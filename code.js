@@ -68,6 +68,10 @@ function initializePlugin() {
             figma.ui.postMessage({ type: 'load-decisions', decisions: [] });
             figma.ui.postMessage({ type: 'load-resources', resources: [] });
         }
+        // Rebuild visual log if there are decisions
+        if (decisions.length > 0) {
+            yield rebuildVisualLog();
+        }
         // Send current selection info to UI
         sendSelectionInfo();
     });
@@ -125,10 +129,265 @@ function sendSelectionInfo() {
 }
 // Check if we've switched to a different document and reload decisions if needed
 function checkForDocumentChange() {
-    if (currentDocumentId !== (figma.fileKey || figma.root.id)) {
+    if (currentDocumentId !== figma.fileKey || figma.root.id) {
         console.log('Document changed, reloading decisions');
         initializePlugin();
     }
+}
+// Function to create or get the Design Decisions page
+function getOrCreateDesignDecisionsPage() {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Check if 'Design Decisions' page already exists
+        const existingPage = figma.root.children.find(page => page.name === 'Design Decisions');
+        if (existingPage) {
+            return existingPage;
+        }
+        // Create new page
+        const newPage = figma.createPage();
+        newPage.name = 'Design Decisions';
+        // Create the main container frame
+        const containerFrame = figma.createFrame();
+        containerFrame.name = 'Decision Log';
+        containerFrame.resize(1200, 800);
+        containerFrame.x = 100;
+        containerFrame.y = 100;
+        containerFrame.fills = [{ type: 'SOLID', color: { r: 0.98, g: 0.98, b: 0.98 } }];
+        containerFrame.layoutMode = 'VERTICAL';
+        containerFrame.primaryAxisSizingMode = 'AUTO';
+        containerFrame.counterAxisSizingMode = 'FIXED';
+        containerFrame.itemSpacing = 16;
+        containerFrame.paddingTop = 32;
+        containerFrame.paddingBottom = 32;
+        containerFrame.paddingLeft = 32;
+        containerFrame.paddingRight = 32;
+        // Create title
+        const titleText = figma.createText();
+        yield figma.loadFontAsync({ family: "Inter", style: "Bold" });
+        titleText.fontName = { family: "Inter", style: "Bold" };
+        titleText.fontSize = 32;
+        titleText.characters = 'Design Decisions Log';
+        titleText.fills = [{ type: 'SOLID', color: { r: 0.1, g: 0.1, b: 0.1 } }];
+        // Create table header
+        const headerFrame = yield createDecisionTableHeader();
+        containerFrame.appendChild(titleText);
+        containerFrame.appendChild(headerFrame);
+        newPage.appendChild(containerFrame);
+        return newPage;
+    });
+}
+// Function to create table header
+function createDecisionTableHeader() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const headerFrame = figma.createFrame();
+        headerFrame.name = 'Table Header';
+        headerFrame.resize(1136, 48); // Full width minus padding
+        headerFrame.fills = [{ type: 'SOLID', color: { r: 0.95, g: 0.95, b: 0.95 } }];
+        headerFrame.layoutMode = 'HORIZONTAL';
+        headerFrame.counterAxisSizingMode = 'FIXED';
+        headerFrame.primaryAxisSizingMode = 'FIXED';
+        headerFrame.itemSpacing = 16;
+        headerFrame.paddingTop = 12;
+        headerFrame.paddingBottom = 12;
+        headerFrame.paddingLeft = 16;
+        headerFrame.paddingRight = 16;
+        yield figma.loadFontAsync({ family: "Inter", style: "Medium" });
+        const headers = [
+            { text: 'Title', width: 200 },
+            { text: 'Status', width: 100 },
+            { text: 'Details', width: 250 },
+            { text: 'Rationale', width: 250 },
+            { text: 'Author', width: 120 },
+            { text: 'Date', width: 120 },
+            { text: 'Tags', width: 160 }
+        ];
+        headers.forEach(header => {
+            const headerText = figma.createText();
+            headerText.fontName = { family: "Inter", style: "Medium" };
+            headerText.fontSize = 14;
+            headerText.characters = header.text;
+            headerText.fills = [{ type: 'SOLID', color: { r: 0.3, g: 0.3, b: 0.3 } }];
+            headerText.resize(header.width, 24);
+            headerText.textAlignHorizontal = 'LEFT';
+            headerText.textAlignVertical = 'CENTER';
+            headerFrame.appendChild(headerText);
+        });
+        return headerFrame;
+    });
+}
+// Function to create a decision row in the table
+function createDecisionRow(decision) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const rowFrame = figma.createFrame();
+        rowFrame.name = `Decision: ${decision.title}`;
+        rowFrame.resize(1136, 80); // Adjustable height
+        rowFrame.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
+        rowFrame.strokes = [{ type: 'SOLID', color: { r: 0.9, g: 0.9, b: 0.9 } }];
+        rowFrame.strokeWeight = 1;
+        rowFrame.layoutMode = 'HORIZONTAL';
+        rowFrame.counterAxisSizingMode = 'FIXED';
+        rowFrame.primaryAxisSizingMode = 'FIXED';
+        rowFrame.itemSpacing = 16;
+        rowFrame.paddingTop = 12;
+        rowFrame.paddingBottom = 12;
+        rowFrame.paddingLeft = 16;
+        rowFrame.paddingRight = 16;
+        yield figma.loadFontAsync({ family: "Inter", style: "Regular" });
+        yield figma.loadFontAsync({ family: "Inter", style: "Medium" });
+        // Format date
+        const date = new Date(decision.timestamp);
+        const formattedDate = date.toLocaleDateString();
+        // Status color mapping
+        const statusColors = {
+            'proposed': { r: 0.05, g: 0.28, b: 0.63 }, // Blue
+            'accepted': { r: 0.11, g: 0.37, b: 0.13 }, // Green
+            'rejected': { r: 0.72, g: 0.11, b: 0.11 }, // Red
+            'deprecated': { r: 0.24, g: 0.15, b: 0.14 }, // Brown
+            'superseded': { r: 0.29, g: 0.08, b: 0.55 } // Purple
+        };
+        const cellData = [
+            { text: decision.title, width: 200, weight: 'Medium' },
+            { text: decision.status.toUpperCase(), width: 100, weight: 'Medium', color: statusColors[decision.status] },
+            { text: decision.context.substring(0, 100) + (decision.context.length > 100 ? '...' : ''), width: 250, weight: 'Regular' },
+            { text: decision.rationale.substring(0, 100) + (decision.rationale.length > 100 ? '...' : ''), width: 250, weight: 'Regular' },
+            { text: decision.author, width: 120, weight: 'Regular' },
+            { text: formattedDate, width: 120, weight: 'Regular' },
+            { text: decision.tags ? decision.tags.join(', ') : '', width: 160, weight: 'Regular' }
+        ];
+        cellData.forEach(cell => {
+            const cellText = figma.createText();
+            cellText.fontName = { family: "Inter", style: cell.weight };
+            cellText.fontSize = 12;
+            cellText.characters = cell.text;
+            cellText.fills = [{ type: 'SOLID', color: cell.color || { r: 0.2, g: 0.2, b: 0.2 } }];
+            cellText.resize(cell.width, 56);
+            cellText.textAlignHorizontal = 'LEFT';
+            cellText.textAlignVertical = 'TOP';
+            cellText.textAutoResize = 'HEIGHT';
+            rowFrame.appendChild(cellText);
+        });
+        return rowFrame;
+    });
+}
+// Function to add a decision to the visual log
+function addDecisionToVisualLog(decision) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            // Get or create the Design Decisions page
+            const decisionsPage = yield getOrCreateDesignDecisionsPage();
+            // Switch to the decisions page
+            yield figma.setCurrentPageAsync(decisionsPage);
+            // Find the container frame
+            const containerFrame = decisionsPage.findOne(node => node.name === 'Decision Log');
+            if (!containerFrame) {
+                console.error('Could not find Decision Log container frame');
+                return;
+            }
+            // Create the decision row
+            const decisionRow = yield createDecisionRow(decision);
+            // Add the row to the container (it will be added in date order due to how we append)
+            containerFrame.appendChild(decisionRow);
+            // Update the container height if needed
+            containerFrame.resize(containerFrame.width, containerFrame.height + 96); // Row height + spacing
+            console.log('Decision added to visual log successfully');
+        }
+        catch (error) {
+            console.error('Error adding decision to visual log:', error);
+        }
+    });
+}
+// Function to update existing decision in visual log
+function updateDecisionInVisualLog(updatedDecision) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            // Get the Design Decisions page
+            const decisionsPage = figma.root.children.find(page => page.name === 'Design Decisions');
+            if (!decisionsPage) {
+                console.log('Design Decisions page not found, skipping visual update');
+                return;
+            }
+            // Find the container frame
+            const containerFrame = decisionsPage.findOne(node => node.name === 'Decision Log');
+            if (!containerFrame) {
+                console.error('Could not find Decision Log container frame');
+                return;
+            }
+            // Find the existing decision row
+            const existingRow = containerFrame.findOne(node => node.name === `Decision: ${updatedDecision.title}`);
+            if (existingRow) {
+                // Remove the old row
+                existingRow.remove();
+                // Create new row with updated data
+                const newRow = yield createDecisionRow(updatedDecision);
+                // Add the updated row back
+                containerFrame.appendChild(newRow);
+            }
+            console.log('Decision updated in visual log successfully');
+        }
+        catch (error) {
+            console.error('Error updating decision in visual log:', error);
+        }
+    });
+}
+// Function to delete decision from visual log
+function deleteDecisionFromVisualLog(decisionTitle) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            // Get the Design Decisions page
+            const decisionsPage = figma.root.children.find(page => page.name === 'Design Decisions');
+            if (!decisionsPage) {
+                console.log('Design Decisions page not found, skipping visual deletion');
+                return;
+            }
+            // Find the container frame
+            const containerFrame = decisionsPage.findOne(node => node.name === 'Decision Log');
+            if (!containerFrame) {
+                console.error('Could not find Decision Log container frame');
+                return;
+            }
+            // Find and remove the decision row
+            const rowToDelete = containerFrame.findOne(node => node.name === `Decision: ${decisionTitle}`);
+            if (rowToDelete) {
+                rowToDelete.remove();
+                console.log('Decision removed from visual log successfully');
+            }
+        }
+        catch (error) {
+            console.error('Error deleting decision from visual log:', error);
+        }
+    });
+}
+// Function to rebuild the entire visual log (used on plugin load)
+function rebuildVisualLog() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            if (decisions.length === 0) {
+                console.log('No decisions to display in visual log');
+                return;
+            }
+            // Get or create the Design Decisions page
+            const decisionsPage = yield getOrCreateDesignDecisionsPage();
+            // Find the container frame
+            const containerFrame = decisionsPage.findOne(node => node.name === 'Decision Log');
+            if (!containerFrame) {
+                console.error('Could not find Decision Log container frame');
+                return;
+            }
+            // Remove all existing decision rows (keep title and header)
+            const childrenToRemove = containerFrame.children.filter(child => child.name.startsWith('Decision:'));
+            childrenToRemove.forEach(child => child.remove());
+            // Sort decisions by timestamp (newest first)
+            const sortedDecisions = [...decisions].sort((a, b) => b.timestamp - a.timestamp);
+            // Add all decisions to the visual log
+            for (const decision of sortedDecisions) {
+                const decisionRow = yield createDecisionRow(decision);
+                containerFrame.appendChild(decisionRow);
+            }
+            console.log('Visual log rebuilt successfully');
+        }
+        catch (error) {
+            console.error('Error rebuilding visual log:', error);
+        }
+    });
 }
 // Initialize the plugin
 initializePlugin();
@@ -195,6 +454,8 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
             if (saveDecisionsToDocument()) {
                 figma.ui.postMessage({ type: 'decision-created', decision: newDecision });
                 figma.notify('Decision logged successfully');
+                // Also add to visual log
+                yield addDecisionToVisualLog(newDecision);
             }
             else {
                 figma.notify('Error saving decision');
@@ -210,6 +471,8 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
                 if (saveDecisionsToDocument()) {
                     figma.ui.postMessage({ type: 'decision-updated', decision: decisions[index] });
                     figma.notify('Decision updated successfully');
+                    // Update visual log as well
+                    yield updateDecisionInVisualLog(decisions[index]);
                 }
                 else {
                     figma.notify('Error updating decision');
@@ -218,11 +481,18 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
             break;
         }
         case 'delete-decision': {
+            // Find the decision title before deleting (for visual log cleanup)
+            const decisionToDelete = decisions.find(d => d.id === msg.id);
+            const decisionTitle = (decisionToDelete === null || decisionToDelete === void 0 ? void 0 : decisionToDelete.title) || '';
             // Remove the decision
             decisions = decisions.filter(d => d.id !== msg.id);
             if (saveDecisionsToDocument()) {
                 figma.ui.postMessage({ type: 'decision-deleted', id: msg.id });
                 figma.notify('Decision deleted successfully');
+                // Also delete from visual log
+                if (decisionTitle) {
+                    yield deleteDecisionFromVisualLog(decisionTitle);
+                }
             }
             else {
                 figma.notify('Error deleting decision');

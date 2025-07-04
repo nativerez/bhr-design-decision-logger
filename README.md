@@ -10,6 +10,7 @@ A plugin that allows designers to log, track and share design decisions within F
 - **View Decision History**: Chronological listing of all recorded decisions
 - **Link to Artifacts**: Attach URLs to external resources like Jira tickets, research docs, etc.
 - **Link to Figma Elements**: Generate proper links to Figma elements using the format: `https://www.figma.com/design/[documentId]/[fileName]?node-id=[nodeId]`
+- **Visual Decision Log**: Automatically creates a "Design Decisions" page in your Figma file with a table showing all logged decisions
 - **Pros & Cons Documentation**: Structured way to compare multiple approaches
 - **Categorization**: Tag decisions with categories for better organization
 - **Edit/Delete Capabilities**: Update or remove decisions as needed
@@ -77,6 +78,15 @@ Links use the format: https://www.figma.com/design/[documentId]/[fileName]?node-
 File names are properly formatted (spaces converted to dashes) and document IDs are automatically captured
 URLs are automatically validated and formatted to ensure proper links in the markdown output
 
+7. Visual Decision Log:
+
+Automatically creates a "Design Decisions" page in your Figma file when the first decision is logged
+Displays all decisions in a table format directly in the Figma canvas
+Table includes columns for: Title, Status, Details, Rationale, Author, Date, and Tags
+Decisions are automatically sorted by date (newest first)
+Visual log updates automatically when decisions are created, edited, or deleted
+Provides a permanent visual record of decisions within the design file itself
+
 ## Development
 
 This plugin is built using:
@@ -111,6 +121,12 @@ Future versions will support:
 - Integration with design system versioning
 
 ## Changelog
+
+### v1.2.0 - July 4, 2025
+- **New Feature**: Visual Decision Log - Automatically creates a "Design Decisions" page with a table showing all logged decisions
+- **Enhanced**: Decisions now appear both in the plugin UI and as visual elements in the Figma canvas
+- **Improved**: Visual table updates automatically when decisions are created, edited, or deleted
+- **Added**: Table format displays all decision fields in an organized, readable layout
 
 ### v1.1.0 - May 30, 2025
 - **Fixed**: Document ID issue where links were using "0:0" instead of the actual file key
