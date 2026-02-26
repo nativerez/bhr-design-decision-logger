@@ -31,6 +31,7 @@
     }
     .tab-container {
       display: flex;
+      align-items: center;
       border-bottom: 1px solid #e5e5e5;
       margin-bottom: 0;
       background: #fff;
@@ -38,6 +39,26 @@
       top: 0;
       z-index: 100;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .info-icon-btn {
+      margin-left: auto;
+      padding: 8px 16px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .info-icon-btn:hover {
+      color: #18a0fb;
+      background: #f5f5f5;
+    }
+    .info-icon-btn svg {
+      width: 18px;
+      height: 18px;
     }
     .tab {
       padding: 10px 20px;
@@ -647,6 +668,13 @@
   <div class="tab-container">
     <div class="tab active" data-tab="decisions">Decisions</div>
     <div class="tab" data-tab="resources">Resources</div>
+    <button id="info-icon-btn" class="info-icon-btn" title="About">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="16" x2="12" y2="12"/>
+        <line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+    </button>
   </div>
 
   <!-- Decision History -->
@@ -707,6 +735,61 @@
   </div>
   <button id="new-decision-btn" class="action-button">+ <span>New Decision</span></button>
   <button id="new-resource-btn" class="action-button" style="display: none;">+ <span>New Resource</span></button>
+
+  <!-- Info Panel (initially hidden) -->
+  <div id="info-panel" class="decision-form-panel">
+    <div class="detail-header">
+      <div class="detail-title">About Rationale</div>
+      <button class="detail-close" id="info-close">✕</button>
+    </div>
+    
+    <div style="flex: 1; overflow-y: auto; padding: 32px 24px;">
+      <div style="max-width: 500px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 32px;">
+          <div style="width: 80px; height: 80px; margin: 0 auto 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </div>
+          <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 8px; color: #1a1a1a;">Rationale</h2>
+          <p style="color: #666; font-size: 14px; line-height: 1.6;">A Figma plugin for documenting and tracking design decisions</p>
+        </div>
+
+        <div style="background: #f8f9fa; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a1a;">About</h3>
+          <p style="color: #666; font-size: 14px; line-height: 1.8; margin-bottom: 12px;">
+            Rationale helps design teams capture the context and reasoning behind their design decisions. 
+            Link decisions to Figma elements, track their status, and maintain a searchable history of your project's evolution.
+          </p>
+        </div>
+
+        <div style="background: #f8f9fa; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a1a;">Created By</h3>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 18px;">
+              JW
+            </div>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Jamie Wallace</div>
+              <a href="https://figma.com/@nativerez" target="_blank" style="color: #18a0fb; text-decoration: none; font-size: 13px; display: flex; align-items: center; gap: 4px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                View Figma Profile
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: center; padding: 16px; color: #999; font-size: 12px;">
+          Version 1.0.0
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Decision Form Panel (initially hidden) -->
   <div id="decision-form-panel" class="decision-form-panel">
@@ -1360,6 +1443,15 @@
 
     // New Decision Button - show the form panel
     document.getElementById('new-decision-btn').addEventListener('click', showDecisionForm);
+    
+    // Info panel handlers
+    document.getElementById('info-icon-btn').addEventListener('click', () => {
+      document.getElementById('info-panel').classList.add('active');
+    });
+    
+    document.getElementById('info-close').addEventListener('click', () => {
+      document.getElementById('info-panel').classList.remove('active');
+    });
     
     // New Resource Button - show the resource form panel
     document.getElementById('new-resource-btn').addEventListener('click', showResourceForm);
