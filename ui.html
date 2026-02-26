@@ -56,7 +56,8 @@
       padding: 16px;
       background: #f8f9fa;
       min-height: calc(100vh - 60px);
-      padding-top: 110px;
+      padding-top: 60px;
+      padding-bottom: 80px;
     }
     .tab-content.active {
       display: block !important; /* Use !important to override any other styles */
@@ -65,8 +66,8 @@
     /* Export buttons styling */
     .export-actions {
       position: fixed;
-      bottom: 30px;
-      left: 30px;
+      bottom: 16px;
+      left: 16px;
       display: flex;
       gap: 8px;
       z-index: 100;
@@ -228,15 +229,15 @@
     }
     .decision-list {
       margin-top: 16px;
-      padding: 16px;
-      background: #f0f2f5;
+      /* padding: 16px; */
+      /* background: #f0f2f5; */
       border-radius: 8px;
       min-height: 200px;
     }
     .resource-list {
       margin-top: 16px;
-      padding: 16px;
-      background: #f0f2f5;
+      /* padding: 16px; */
+      /* background: #f0f2f5; */
       border-radius: 8px;
       min-height: 200px;
     }
@@ -518,7 +519,7 @@
       right: 16px;
       padding: 4px 8px;
       border-radius: 4px;
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 500;
       text-transform: uppercase;
     }
@@ -546,14 +547,15 @@
     /* New action button style */
     .action-button {
       position: fixed;
-      bottom: 30px;
-      right: 30px;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
+      bottom: 16px;
+      right: 16px;
+      width: auto;
+      height: auto;
+      border-radius: 999px;
       background-color: #18a0fb;
       color: white;
       display: flex;
+      grid-gap: 6px;
       align-items: center;
       justify-content: center;
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
@@ -562,11 +564,18 @@
       transition: all 0.2s ease;
       font-size: 20px;
       border: none;
+      padding: 14px 16px;
     }
     
     .action-button:hover {
       transform: scale(1.05);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .action-button span {
+      font-size: 13px;
+      display: inline-block;
+      flex: none;
     }
     
     /* Decision form panel style */
@@ -696,8 +705,8 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download-icon lucide-download"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
     </button>
   </div>
-  <button id="new-decision-btn" class="action-button">+</button>
-  <button id="new-resource-btn" class="action-button" style="display: none;">+</button>
+  <button id="new-decision-btn" class="action-button">+ <span>New Decision</span></button>
+  <button id="new-resource-btn" class="action-button" style="display: none;">+ <span>New Resource</span></button>
 
   <!-- Decision Form Panel (initially hidden) -->
   <div id="decision-form-panel" class="decision-form-panel">
@@ -2814,8 +2823,13 @@
     const style = document.createElement('style');
     style.textContent = `
       .resource-category-tag {
-        background-color: #e9f5ff;
-        color: #007ACC;
+        background-color: #E3F2FD;
+        color: #0D47A1;
+        font-size: 10px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 500;
+        text-transform: uppercase;
       }
       .resource-card {
         border-left: 4px solid #18a0fb;
