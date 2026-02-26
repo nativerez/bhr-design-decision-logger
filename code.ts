@@ -92,10 +92,8 @@ async function initializePlugin() {
     figma.ui.postMessage({ type: 'load-resources', resources: [] });
   }
 
-  // Rebuild visual log if there are decisions
-  if (decisions.length > 0) {
-    await rebuildVisualLog();
-  }
+  // Don't rebuild visual log on initialization to avoid page switching issues
+  // Visual log will be updated when decisions are added/updated/deleted
 
   // Send current selection info to UI
   sendSelectionInfo();
@@ -313,25 +311,36 @@ async function addDecisionToVisualLog(decision: Decision) {
     // Get or create the Design Decisions page
     const decisionsPage = await getOrCreateDesignDecisionsPage();
     
-    // Switch to the decisions page
-    await figma.setCurrentPageAsync(decisionsPage);
+    // Only switch pages if we're not already on the Design Decisions page
+    const previousPage = figma.currentPage;
+    const needsPageSwitch = previousPage.id !== decisionsPage.id;
+    
+    if (needsPageSwitch) {
+      await figma.setCurrentPageAsync(decisionsPage);
+    }
     
     // Find the container frame
     const containerFrame = decisionsPage.findOne(node => node.name === 'Decision Log') as FrameNode;
     
     if (!containerFrame) {
       console.error('Could not find Decision Log container frame');
+      // Switch back if we switched
+      if (needsPageSwitch) {
+        await figma.setCurrentPageAsync(previousPage);
+      }
       return;
     }
     
     // Create the decision row
     const decisionRow = await createDecisionRow(decision);
     
-    // Add the row to the container (it will be added in date order due to how we append)
+    // Add the row to the container (auto layout will handle sizing)
     containerFrame.appendChild(decisionRow);
     
-    // Update the container height if needed
-    containerFrame.resize(containerFrame.width, containerFrame.height + 96); // Row height + spacing
+    // Switch back only if we switched in the first place
+    if (needsPageSwitch) {
+      await figma.setCurrentPageAsync(previousPage);
+    }
     
     console.log('Decision added to visual log successfully');
     
@@ -351,11 +360,23 @@ async function updateDecisionInVisualLog(updatedDecision: Decision) {
       return;
     }
     
+    // Only switch pages if we're not already on the Design Decisions page
+    const previousPage = figma.currentPage;
+    const needsPageSwitch = previousPage.id !== decisionsPage.id;
+    
+    if (needsPageSwitch) {
+      await figma.setCurrentPageAsync(decisionsPage);
+    }
+    
     // Find the container frame
     const containerFrame = decisionsPage.findOne(node => node.name === 'Decision Log') as FrameNode;
     
     if (!containerFrame) {
       console.error('Could not find Decision Log container frame');
+      // Switch back if we switched
+      if (needsPageSwitch) {
+        await figma.setCurrentPageAsync(previousPage);
+      }
       return;
     }
     
@@ -371,6 +392,11 @@ async function updateDecisionInVisualLog(updatedDecision: Decision) {
       
       // Add the updated row back
       containerFrame.appendChild(newRow);
+    }
+    
+    // Switch back only if we switched in the first place
+    if (needsPageSwitch) {
+      await figma.setCurrentPageAsync(previousPage);
     }
     
     console.log('Decision updated in visual log successfully');
@@ -423,11 +449,23 @@ async function rebuildVisualLog() {
     // Get or create the Design Decisions page
     const decisionsPage = await getOrCreateDesignDecisionsPage();
     
+    // Only switch pages if we're not already on the Design Decisions page
+    const previousPage = figma.currentPage;
+    const needsPageSwitch = previousPage.id !== decisionsPage.id;
+    
+    if (needsPageSwitch) {
+      await figma.setCurrentPageAsync(decisionsPage);
+    }
+    
     // Find the container frame
     const containerFrame = decisionsPage.findOne(node => node.name === 'Decision Log') as FrameNode;
     
     if (!containerFrame) {
       console.error('Could not find Decision Log container frame');
+      // Switch back if we switched
+      if (needsPageSwitch) {
+        await figma.setCurrentPageAsync(previousPage);
+      }
       return;
     }
     
@@ -445,6 +483,16 @@ async function rebuildVisualLog() {
     for (const decision of sortedDecisions) {
       const decisionRow = await createDecisionRow(decision);
       containerFrame.appendChild(decisionRow);
+    }
+    
+    // Force layout update by briefly toggling a property
+    const currentPadding = containerFrame.paddingBottom;
+    containerFrame.paddingBottom = currentPadding + 1;
+    containerFrame.paddingBottom = currentPadding;
+    
+    // Switch back only if we switched in the first place
+    if (needsPageSwitch) {
+      await figma.setCurrentPageAsync(previousPage);
     }
     
     console.log('Visual log rebuilt successfully');
