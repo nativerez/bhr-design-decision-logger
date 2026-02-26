@@ -43,7 +43,7 @@ const RESOURCES_KEY = 'designResources';
 let currentDocumentId: string = figma.fileKey || figma.root.id;
 
 // Load the HTML UI
-figma.showUI(__html__, { width: 640, height: 840 });
+figma.showUI(__html__, { width: 480, height: 600 });
 
 // Load saved decisions and resources when plugin starts
 async function initializePlugin() {

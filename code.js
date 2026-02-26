@@ -19,7 +19,7 @@ const RESOURCES_KEY = 'designResources';
 // Track current document ID to detect file changes
 let currentDocumentId = figma.fileKey || figma.root.id;
 // Load the HTML UI
-figma.showUI(__html__, { width: 640, height: 840 });
+figma.showUI(__html__, { width: 480, height: 600 });
 // Load saved decisions and resources when plugin starts
 function initializePlugin() {
     return __awaiter(this, void 0, void 0, function* () {
