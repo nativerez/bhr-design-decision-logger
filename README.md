@@ -135,4 +135,4 @@ Future versions will support:
 
 ## License
 
-Copyright © BrightHR 2025. All rights reserved.
+All rights reserved.

@@ -13,7 +13,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 let decisions = [];
 let resources = [];
 // Constants for plugin storage
-const PLUGIN_NAMESPACE = 'bhrDesignDecisionLogger';
+const PLUGIN_NAMESPACE = 'rationalePlugin';
 const DECISIONS_KEY = 'designDecisions';
 const RESOURCES_KEY = 'designResources';
 // Track current document ID to detect file changes

@@ -35,7 +35,7 @@ let decisions: Decision[] = [];
 let resources: Resource[] = [];
 
 // Constants for plugin storage
-const PLUGIN_NAMESPACE = 'bhrDesignDecisionLogger';
+const PLUGIN_NAMESPACE = 'rationalePlugin';
 const DECISIONS_KEY = 'designDecisions';
 const RESOURCES_KEY = 'designResources';
 
