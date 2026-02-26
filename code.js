@@ -136,14 +136,23 @@ function checkForDocumentChange() {
 function getOrCreateDesignDecisionsPage() {
     return __awaiter(this, void 0, void 0, function* () {
         // Check if 'Design Decisions' page already exists
-        const existingPage = figma.root.children.find(page => page.name === 'Design Decisions');
+        let existingPage = figma.root.children.find(page => page.name === 'Design Decisions');
+        // If page exists, check if it has the Decision Log container
         if (existingPage) {
-            return existingPage;
+            const containerFrame = existingPage.findOne(node => node.name === 'Decision Log');
+            // If container exists, return the page
+            if (containerFrame) {
+                return existingPage;
+            }
+            // Container doesn't exist, we'll create it below
+            console.log('Design Decisions page exists but container missing, recreating structure');
         }
-        // Create new page
-        const newPage = figma.createPage();
-        newPage.name = 'Design Decisions';
-        // Create the main container frame
+        else {
+            // Create new page
+            existingPage = figma.createPage();
+            existingPage.name = 'Design Decisions';
+        }
+        // Create the main container frame (whether page is new or existing)
         const containerFrame = figma.createFrame();
         containerFrame.name = 'Decision Log';
         containerFrame.resize(1200, 800);
@@ -181,8 +190,8 @@ function getOrCreateDesignDecisionsPage() {
         containerFrame.appendChild(titleText);
         containerFrame.appendChild(subtitleText);
         containerFrame.appendChild(headerFrame);
-        newPage.appendChild(containerFrame);
-        return newPage;
+        existingPage.appendChild(containerFrame);
+        return existingPage;
     });
 }
 // Function to create table header
@@ -418,11 +427,7 @@ function deleteDecisionFromVisualLog(decisionTitle) {
 function rebuildVisualLog() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            if (decisions.length === 0) {
-                console.log('No decisions to display in visual log');
-                return;
-            }
-            // Get or create the Design Decisions page
+            // Get or create the Design Decisions page (do this even if no decisions)
             const decisionsPage = yield getOrCreateDesignDecisionsPage();
             // Only switch pages if we're not already on the Design Decisions page
             const previousPage = figma.currentPage;
@@ -430,10 +435,10 @@ function rebuildVisualLog() {
             if (needsPageSwitch) {
                 yield figma.setCurrentPageAsync(decisionsPage);
             }
-            // Find the container frame
+            // Find the container frame - it should always exist after getOrCreateDesignDecisionsPage
             const containerFrame = decisionsPage.findOne(node => node.name === 'Decision Log');
             if (!containerFrame) {
-                console.error('Could not find Decision Log container frame');
+                console.error('Could not find Decision Log container frame - this should not happen!');
                 // Switch back if we switched
                 if (needsPageSwitch) {
                     yield figma.setCurrentPageAsync(previousPage);
