@@ -11,8 +11,8 @@
     body {
       font-family: 'Inter', sans-serif;
       font-size: 14px;
-      background: #fff;
-      padding: 16px;
+      background: #f8f9fa;
+      padding: 0;
       overflow-x: hidden;
     }
     
@@ -32,7 +32,12 @@
     .tab-container {
       display: flex;
       border-bottom: 1px solid #e5e5e5;
-      margin-bottom: 20px;
+      margin-bottom: 0;
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     .tab {
       padding: 10px 20px;
@@ -48,6 +53,10 @@
     /* Tab content visibility control */
     .tab-content {
       display: none !important; /* Use !important to override any other styles */
+      padding: 16px;
+      background: #f8f9fa;
+      min-height: calc(100vh - 60px);
+      padding-top: 110px;
     }
     .tab-content.active {
       display: block !important; /* Use !important to override any other styles */
@@ -191,10 +200,10 @@
       color: white;
       border: none;
       border-radius: 4px;
-      padding: 10px 20px;
+      padding: 8px 16px;
       cursor: pointer;
       font-weight: 500;
-      font-size: 14px;
+      font-size: 13px;
     }
     .button.secondary {
       background: #f5f5f5;
@@ -207,6 +216,17 @@
     }
     .decision-list {
       margin-top: 16px;
+      padding: 16px;
+      background: #f0f2f5;
+      border-radius: 8px;
+      min-height: 200px;
+    }
+    .resource-list {
+      margin-top: 16px;
+      padding: 16px;
+      background: #f0f2f5;
+      border-radius: 8px;
+      min-height: 200px;
     }
     .decision-card {
       padding: 16px;
@@ -300,12 +320,56 @@
       display: flex;
       margin-bottom: 16px;
       gap: 10px;
+      position: fixed;
+      top: 42px;
+      left: 0;
+      right: 0;
+      background: #fff;
+      padding: 12px 16px;
+      z-index: 99;
+      border-bottom: 1px solid #e5e5e5;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
     }
     .filter-bar input, 
     .filter-bar select {
       flex: 1;
       min-width: 0; /* Prevents flex items from overflowing */
-      font-size: 14px;
+      font-size: 12px;
+      padding: 6px 10px;
+      border: none;
+      background: transparent;
+      color: #666;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+    .filter-bar input:hover,
+    .filter-bar select:hover {
+      background: #f5f5f5;
+      color: #333;
+    }
+    .filter-bar input:focus,
+    .filter-bar select:focus {
+      background: #f0f0f0;
+      color: #333;
+      outline: none;
+    }
+    .filter-bar input {
+      border: 1px solid #e5e5e5;
+      background: #fff;
+    }
+    .filter-bar input::placeholder {
+      color: #999;
+      font-size: 12px;
+    }
+    .filter-bar select {
+      background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1.5L6 6.5L11 1.5" stroke="%23666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 28px;
     }
     
     /* New styles for detail panel */
@@ -472,8 +536,8 @@
       position: fixed;
       bottom: 30px;
       right: 30px;
-      width: 56px;
-      height: 56px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background-color: #18a0fb;
       color: white;
@@ -484,7 +548,7 @@
       cursor: pointer;
       z-index: 100;
       transition: all 0.2s ease;
-      font-size: 24px;
+      font-size: 20px;
       border: none;
     }
     
