@@ -194,10 +194,23 @@ async function getOrCreateDesignDecisionsPage(): Promise<PageNode> {
   titleText.characters = 'Design Decisions Log';
   titleText.fills = [{type: 'SOLID', color: {r: 0.1, g: 0.1, b: 0.1}}];
   
+  // Create last updated subtitle
+  const now = new Date();
+  const formattedDate = now.toLocaleDateString('en-GB');
+  const formattedTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const subtitleText = figma.createText();
+  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+  subtitleText.fontName = { family: "Inter", style: "Regular" };
+  subtitleText.fontSize = 14;
+  subtitleText.characters = `Last updated: ${formattedDate}  ·  ${formattedTime}`;
+  subtitleText.fills = [{type: 'SOLID', color: {r: 0.5, g: 0.5, b: 0.5}}];
+  subtitleText.name = 'Last Updated';
+  
   // Create table header
   const headerFrame = await createDecisionTableHeader();
   
   containerFrame.appendChild(titleText);
+  containerFrame.appendChild(subtitleText);
   containerFrame.appendChild(headerFrame);
   newPage.appendChild(containerFrame);
   
@@ -266,9 +279,11 @@ async function createDecisionRow(decision: Decision): Promise<FrameNode> {
   await figma.loadFontAsync({ family: "Inter", style: "Regular" });
   await figma.loadFontAsync({ family: "Inter", style: "Medium" });
   
-  // Format date
+  // Format date and time
   const date = new Date(decision.timestamp);
-  const formattedDate = date.toLocaleDateString();
+  const formattedDate = date.toLocaleDateString('en-GB');
+  const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const dateTimeString = `${formattedDate}  ${formattedTime}`;
   
   // Status color mapping
   const statusColors = {
@@ -285,7 +300,7 @@ async function createDecisionRow(decision: Decision): Promise<FrameNode> {
     { text: decision.context.substring(0, 100) + (decision.context.length > 100 ? '...' : ''), width: 250, weight: 'Regular' },
     { text: decision.rationale.substring(0, 100) + (decision.rationale.length > 100 ? '...' : ''), width: 250, weight: 'Regular' },
     { text: decision.author, width: 120, weight: 'Regular' },
-    { text: formattedDate, width: 120, weight: 'Regular' },
+    { text: dateTimeString, width: 120, weight: 'Regular' },
     { text: decision.tags ? decision.tags.join(', ') : '', width: 160, weight: 'Regular' }
   ];
   
@@ -303,6 +318,22 @@ async function createDecisionRow(decision: Decision): Promise<FrameNode> {
   });
   
   return rowFrame;
+}
+
+// Function to update the last updated timestamp
+async function updateLastUpdatedTimestamp(decisionsPage: PageNode) {
+  const containerFrame = decisionsPage.findOne(node => node.name === 'Decision Log') as FrameNode;
+  if (!containerFrame) return;
+  
+  const subtitleText = containerFrame.findOne(node => node.name === 'Last Updated') as TextNode;
+  if (!subtitleText) return;
+  
+  const now = new Date();
+  const formattedDate = now.toLocaleDateString('en-GB');
+  const formattedTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  
+  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+  subtitleText.characters = `Last updated: ${formattedDate}  · ${formattedTime}`;
 }
 
 // Function to add a decision to the visual log
@@ -336,6 +367,9 @@ async function addDecisionToVisualLog(decision: Decision) {
     
     // Add the row to the container (auto layout will handle sizing)
     containerFrame.appendChild(decisionRow);
+    
+    // Update the last updated timestamp
+    await updateLastUpdatedTimestamp(decisionsPage);
     
     // Switch back only if we switched in the first place
     if (needsPageSwitch) {
@@ -394,6 +428,9 @@ async function updateDecisionInVisualLog(updatedDecision: Decision) {
       containerFrame.appendChild(newRow);
     }
     
+    // Update the last updated timestamp
+    await updateLastUpdatedTimestamp(decisionsPage);
+    
     // Switch back only if we switched in the first place
     if (needsPageSwitch) {
       await figma.setCurrentPageAsync(previousPage);
@@ -430,6 +467,8 @@ async function deleteDecisionFromVisualLog(decisionTitle: string) {
     
     if (rowToDelete) {
       rowToDelete.remove();
+      // Update the last updated timestamp
+      await updateLastUpdatedTimestamp(decisionsPage);
       console.log('Decision removed from visual log successfully');
     }
     
@@ -489,6 +528,9 @@ async function rebuildVisualLog() {
     const currentPadding = containerFrame.paddingBottom;
     containerFrame.paddingBottom = currentPadding + 1;
     containerFrame.paddingBottom = currentPadding;
+    
+    // Update the last updated timestamp
+    await updateLastUpdatedTimestamp(decisionsPage);
     
     // Switch back only if we switched in the first place
     if (needsPageSwitch) {
@@ -736,6 +778,17 @@ figma.ui.onmessage = async (msg) => {
           console.error('Error navigating to node:', error);
           figma.notify('Could not find the linked element', { error: true });
         }
+      }
+      break;
+    }
+    
+    case 'rebuild-visual-log': {
+      try {
+        await rebuildVisualLog();
+        figma.notify('Visual log rebuilt successfully');
+      } catch (error) {
+        console.error('Error rebuilding visual log:', error);
+        figma.notify('Error rebuilding visual log', { error: true });
       }
       break;
     }

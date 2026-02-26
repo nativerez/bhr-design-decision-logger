@@ -165,9 +165,21 @@ function getOrCreateDesignDecisionsPage() {
         titleText.fontSize = 32;
         titleText.characters = 'Design Decisions Log';
         titleText.fills = [{ type: 'SOLID', color: { r: 0.1, g: 0.1, b: 0.1 } }];
+        // Create last updated subtitle
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString('en-GB');
+        const formattedTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        const subtitleText = figma.createText();
+        yield figma.loadFontAsync({ family: "Inter", style: "Regular" });
+        subtitleText.fontName = { family: "Inter", style: "Regular" };
+        subtitleText.fontSize = 14;
+        subtitleText.characters = `Last updated: ${formattedDate}  ·  ${formattedTime}`;
+        subtitleText.fills = [{ type: 'SOLID', color: { r: 0.5, g: 0.5, b: 0.5 } }];
+        subtitleText.name = 'Last Updated';
         // Create table header
         const headerFrame = yield createDecisionTableHeader();
         containerFrame.appendChild(titleText);
+        containerFrame.appendChild(subtitleText);
         containerFrame.appendChild(headerFrame);
         newPage.appendChild(containerFrame);
         return newPage;
@@ -231,9 +243,11 @@ function createDecisionRow(decision) {
         rowFrame.paddingRight = 16;
         yield figma.loadFontAsync({ family: "Inter", style: "Regular" });
         yield figma.loadFontAsync({ family: "Inter", style: "Medium" });
-        // Format date
+        // Format date and time
         const date = new Date(decision.timestamp);
-        const formattedDate = date.toLocaleDateString();
+        const formattedDate = date.toLocaleDateString('en-GB');
+        const formattedTime = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        const dateTimeString = `${formattedDate}  ${formattedTime}`;
         // Status color mapping
         const statusColors = {
             'proposed': { r: 0.05, g: 0.28, b: 0.63 }, // Blue
@@ -248,7 +262,7 @@ function createDecisionRow(decision) {
             { text: decision.context.substring(0, 100) + (decision.context.length > 100 ? '...' : ''), width: 250, weight: 'Regular' },
             { text: decision.rationale.substring(0, 100) + (decision.rationale.length > 100 ? '...' : ''), width: 250, weight: 'Regular' },
             { text: decision.author, width: 120, weight: 'Regular' },
-            { text: formattedDate, width: 120, weight: 'Regular' },
+            { text: dateTimeString, width: 120, weight: 'Regular' },
             { text: decision.tags ? decision.tags.join(', ') : '', width: 160, weight: 'Regular' }
         ];
         cellData.forEach(cell => {
@@ -264,6 +278,22 @@ function createDecisionRow(decision) {
             rowFrame.appendChild(cellText);
         });
         return rowFrame;
+    });
+}
+// Function to update the last updated timestamp
+function updateLastUpdatedTimestamp(decisionsPage) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const containerFrame = decisionsPage.findOne(node => node.name === 'Decision Log');
+        if (!containerFrame)
+            return;
+        const subtitleText = containerFrame.findOne(node => node.name === 'Last Updated');
+        if (!subtitleText)
+            return;
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString('en-GB');
+        const formattedTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        yield figma.loadFontAsync({ family: "Inter", style: "Regular" });
+        subtitleText.characters = `Last updated: ${formattedDate}  · ${formattedTime}`;
     });
 }
 // Function to add a decision to the visual log
@@ -292,6 +322,8 @@ function addDecisionToVisualLog(decision) {
             const decisionRow = yield createDecisionRow(decision);
             // Add the row to the container (auto layout will handle sizing)
             containerFrame.appendChild(decisionRow);
+            // Update the last updated timestamp
+            yield updateLastUpdatedTimestamp(decisionsPage);
             // Switch back only if we switched in the first place
             if (needsPageSwitch) {
                 yield figma.setCurrentPageAsync(previousPage);
@@ -339,6 +371,8 @@ function updateDecisionInVisualLog(updatedDecision) {
                 // Add the updated row back
                 containerFrame.appendChild(newRow);
             }
+            // Update the last updated timestamp
+            yield updateLastUpdatedTimestamp(decisionsPage);
             // Switch back only if we switched in the first place
             if (needsPageSwitch) {
                 yield figma.setCurrentPageAsync(previousPage);
@@ -370,6 +404,8 @@ function deleteDecisionFromVisualLog(decisionTitle) {
             const rowToDelete = containerFrame.findOne(node => node.name === `Decision: ${decisionTitle}`);
             if (rowToDelete) {
                 rowToDelete.remove();
+                // Update the last updated timestamp
+                yield updateLastUpdatedTimestamp(decisionsPage);
                 console.log('Decision removed from visual log successfully');
             }
         }
@@ -418,6 +454,8 @@ function rebuildVisualLog() {
             const currentPadding = containerFrame.paddingBottom;
             containerFrame.paddingBottom = currentPadding + 1;
             containerFrame.paddingBottom = currentPadding;
+            // Update the last updated timestamp
+            yield updateLastUpdatedTimestamp(decisionsPage);
             // Switch back only if we switched in the first place
             if (needsPageSwitch) {
                 yield figma.setCurrentPageAsync(previousPage);
@@ -638,6 +676,17 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
                     console.error('Error navigating to node:', error);
                     figma.notify('Could not find the linked element', { error: true });
                 }
+            }
+            break;
+        }
+        case 'rebuild-visual-log': {
+            try {
+                yield rebuildVisualLog();
+                figma.notify('Visual log rebuilt successfully');
+            }
+            catch (error) {
+                console.error('Error rebuilding visual log:', error);
+                figma.notify('Error rebuilding visual log', { error: true });
             }
             break;
         }
