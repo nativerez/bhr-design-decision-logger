@@ -453,8 +453,16 @@
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 20px;
-      margin-left: 10px;
+      font-size: 24px;
+      margin-right: 12px;
+      padding: 0;
+      color: #666;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s ease;
+    }
+    .detail-close:hover {
+      color: #333;
     }
     .detail-header .status-badge {
       position: static;
@@ -1009,9 +1017,9 @@
   <!-- Decision Detail Panel (hidden by default) -->
   <div id="decision-detail-panel" class="decision-detail-panel">
     <div class="detail-header">
+      <button class="detail-close" id="detail-close">←</button>
       <div class="detail-title" id="detail-title">Decision Title</div>
       <div class="status-badge" id="detail-status">Status</div>
-      <button class="detail-close" id="detail-close">✕</button>
     </div>
     
     <div class="decision-detail-panel-content">
