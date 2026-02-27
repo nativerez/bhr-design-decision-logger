@@ -547,14 +547,24 @@
       margin-bottom: 6px;
     }
     .detail-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      margin-bottom: 10px;
-      justify-content: flex-end;
-      padding-top: 15px;
+      padding: 15px 20px;
+      background-color: white;
       border-top: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+      position: sticky;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      z-index: 2;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: auto;
     }
+    
     .status-badge {
       position: absolute;
       top: 16px;
@@ -827,7 +837,6 @@
     <form id="decision-form">
       <!-- Figma Element Section -->
       
-      <h3>Linked Figma Element</h3>
       <div id="figma-node-info" class="figma-node-info">
         <div id="no-selection" style="color: #888; font-style: italic;">No element selected. Select a Figma element before creating a decision to link it.</div>
         <div id="node-selection" style="display: none;">
@@ -1003,13 +1012,13 @@
         <!-- Tags will be inserted here -->
       </div>
     </div>
+    </div> <!-- end of decision-detail-panel-content -->
     
     <div class="detail-actions">
       <button class="button secondary" id="resource-detail-visit-button">Visit Resource</button>
       <button class="button secondary" id="resource-detail-edit-button">Edit</button>
       <button class="button secondary danger" id="resource-detail-delete-button">Delete</button>
     </div>
-    </div> <!-- end of decision-detail-panel-content -->
   </div>
 
   <!-- Decision Detail Panel (hidden by default) -->
@@ -1019,8 +1028,20 @@
       <div class="detail-title" id="detail-title">Decision Title</div>
       <div class="status-badge" id="detail-status">Status</div>
     </div>
+
+    
     
     <div class="decision-detail-panel-content">
+
+    <div id="detail-node-section" class="detail-section" style="display: none;">
+      <div id="detail-node-info">
+        <!-- Node info will be inserted here -->
+      </div>
+      <div style="margin-top: 10px;">
+        <button id="detail-navigate-button" class="button secondary">Navigate to Element</button>
+      </div>
+    </div>
+
       <div class="detail-meta">
         <div id="detail-author">By Author</div>
         <div id="detail-date">On Date</div>
@@ -1060,22 +1081,12 @@
         </div>
       </div>
     </div>
-    
-    <div id="detail-node-section" class="detail-section" style="display: none;">
-      <div class="detail-section-title">Linked Figma Element</div>
-      <div id="detail-node-info">
-        <!-- Node info will be inserted here -->
-      </div>
-      <div style="margin-top: 10px;">
-        <button id="detail-navigate-button" class="button secondary">Navigate to Element</button>
-      </div>
-    </div>
+    </div> <!-- end of decision-detail-panel-content -->
     
     <div class="detail-actions">
-      <button class="button secondary" id="detail-edit-button">Edit Decision</button>
       <button class="button secondary danger" id="detail-delete-button">Delete</button>
+      <button class="button secondary" id="detail-edit-button">Edit Decision</button>
     </div>
-    </div> <!-- end of decision-detail-panel-content -->
   </div>
 
   <script>
