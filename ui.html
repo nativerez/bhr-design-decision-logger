@@ -574,6 +574,28 @@
       font-size: 10px;
       font-weight: 500;
       text-transform: uppercase;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .status-badge:hover {
+      opacity: 0.8;
+      border-color: rgba(0,0,0,0.1);
+    }
+    .status-badge select {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      padding: 0;
+      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: 500;
+      outline: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
     }
     .status-proposed {
       background-color: #E3F2FD;
@@ -594,6 +616,34 @@
     .status-superseded {
       background-color: #F3E5F5;
       color: #4A148C;
+    }
+    
+    .change-history {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    .change-history-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .change-history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 12px;
+      color: #666;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .change-history-item:last-child {
+      border-bottom: none;
+    }
+    .change-history-status {
+      font-weight: 500;
+      text-transform: capitalize;
     }
     
     /* New action button style */
@@ -858,16 +908,6 @@
           <textarea id="context" placeholder="Describe the details of this decision" required></textarea>
         </div>
         <div class="form-group">
-          <label for="status">Status</label>
-          <select id="status" required>
-            <option value="proposed">Proposed</option>
-            <option value="accepted">Accepted</option>
-            <option value="rejected">Rejected</option>
-            <option value="deprecated">Deprecated</option>
-            <option value="superseded">Superseded</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label for="rationale">Rationale</label>
           <textarea id="rationale" placeholder="Why was this decision made?" required></textarea>
         </div>
@@ -1026,7 +1066,15 @@
     <div class="detail-header">
       <button class="detail-close" id="detail-close">←</button>
       <div class="detail-title" id="detail-title">Decision Title</div>
-      <div class="status-badge" id="detail-status">Status</div>
+      <div class="status-badge" id="detail-status-container">
+        <select id="detail-status-select">
+          <option value="proposed">Proposed</option>
+          <option value="accepted">Accepted</option>
+          <option value="rejected">Rejected</option>
+          <option value="deprecated">Deprecated</option>
+          <option value="superseded">Superseded</option>
+        </select>
+      </div>
     </div>
 
     
@@ -1044,7 +1092,6 @@
 
       <div class="detail-meta">
         <div id="detail-author">By Author</div>
-        <div id="detail-date">On Date</div>
       </div>
     
     <div class="detail-section">
@@ -1079,6 +1126,13 @@
             <!-- Cons will be inserted here -->
           </ul>
         </div>
+      </div>
+    </div>
+    
+    <div id="detail-change-history-section" class="detail-section" style="display: none;">
+      <div class="detail-section-title">Change History</div>
+      <div class="change-history" id="detail-change-history">
+        <!-- Change history will be inserted here -->
       </div>
     </div>
     </div> <!-- end of decision-detail-panel-content -->
@@ -1519,7 +1573,6 @@
       const title = document.getElementById('title').value;
       const context = document.getElementById('context').value;
       const rationale = document.getElementById('rationale').value;
-      const status = document.getElementById('status').value;
       
       // Gather links
       const links = [];
@@ -1563,8 +1616,7 @@
               cons,
               nodeId: selectedNodeId,
               nodeName: selectedNodeName,
-              pageName: selectedPageName,
-              status // Include status when editing a decision
+              pageName: selectedPageName
             }
           }
         }, '*');
@@ -1581,8 +1633,7 @@
             cons,
             nodeId: selectedNodeId,
             nodeName: selectedNodeName,
-            pageName: selectedPageName, // Include page name when creating a decision
-            status // Include status when creating a decision
+            pageName: selectedPageName // Include page name when creating a decision
           }
         }, '*');
       }
@@ -2207,20 +2258,39 @@
       // Set basic info
       document.getElementById('detail-title').textContent = decision.title;
       
-      // Set status with proper styling
-     
-      const statusElement = document.getElementById('detail-status');
-      const statusText = decision.status || 'Proposed';
+      // Set status dropdown with proper styling
+      const statusContainer = document.getElementById('detail-status-container');
+      const statusSelect = document.getElementById('detail-status-select');
+      const statusText = decision.status || 'proposed';
       const statusClass = `status-${statusText.toLowerCase()}`;
-      statusElement.textContent = statusText;
-      statusElement.className = 'status-badge ' + statusClass;
       
-      // Format date
-      const date = new Date(decision.timestamp);
-      const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+      // Remove any existing event listeners by cloning
+      const newStatusSelect = statusSelect.cloneNode(true);
+      statusSelect.parentNode.replaceChild(newStatusSelect, statusSelect);
+      
+      // Set the value on the NEW select element (must be after cloning)
+      newStatusSelect.value = statusText;
+      statusContainer.className = 'status-badge ' + statusClass;
+      
+      // Add event listener for status changes
+      newStatusSelect.addEventListener('change', (e) => {
+        const newStatus = e.target.value;
+        if (newStatus !== decision.status) {
+          // Send message to update status
+          parent.postMessage({
+            pluginMessage: {
+              type: 'update-decision-status',
+              id: decision.id,
+              status: newStatus
+            }
+          }, '*');
+          
+          // Update the container styling
+          statusContainer.className = 'status-badge status-' + newStatus.toLowerCase();
+        }
+      });
       
       document.getElementById('detail-author').textContent = `By ${decision.author}`;
-      document.getElementById('detail-date').textContent = `On ${formattedDate}`;
       
       // Set content
       document.getElementById('detail-context').textContent = decision.context;
@@ -2320,6 +2390,48 @@
         document.getElementById('detail-navigate-button').style.display = 'none';
       }
       
+      // Handle change history section
+      const changeHistorySection = document.getElementById('detail-change-history-section');
+      const changeHistoryContainer = document.getElementById('detail-change-history');
+      
+      if (decision.changeHistory && decision.changeHistory.length > 0) {
+        changeHistorySection.style.display = 'block';
+        changeHistoryContainer.innerHTML = '';
+        
+        // Sort by newest first
+        const sortedHistory = [...decision.changeHistory].reverse();
+        
+        sortedHistory.forEach(entry => {
+          const historyItem = document.createElement('div');
+          historyItem.classList.add('change-history-item');
+          
+          const date = new Date(entry.changedAt);
+          const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+          
+          // Format differently for 'Created' entries
+          if (entry.status === 'Created') {
+            historyItem.innerHTML = `
+              <div>
+                <span style="color: #999;">Created by ${entry.changedBy}</span>
+              </div>
+              <div style="color: #999; font-size: 11px;">${formattedDate}</div>
+            `;
+          } else {
+            historyItem.innerHTML = `
+              <div>
+                <span class="change-history-status">${entry.status}</span>
+                <span style="color: #999;"> by ${entry.changedBy}</span>
+              </div>
+              <div style="color: #999; font-size: 11px;">${formattedDate}</div>
+            `;
+          }
+          
+          changeHistoryContainer.appendChild(historyItem);
+        });
+      } else {
+        changeHistorySection.style.display = 'none';
+      }
+      
       // Set up action buttons - first remove any existing event listeners by cloning and replacing
       const editButton = document.getElementById('detail-edit-button');
       const newEditButton = editButton.cloneNode(true);
@@ -2407,7 +2519,6 @@
       document.getElementById('title').value = decision.title;
       document.getElementById('context').value = decision.context;
       document.getElementById('rationale').value = decision.rationale;
-      document.getElementById('status').value = decision.status;
       
       // Set selected node info
       selectedNodeId = decision.nodeId || null;
@@ -2614,6 +2725,20 @@
           document.getElementById('decision-form-panel').classList.remove('active');
           // Make sure the New Decision button is visible
           document.getElementById('new-decision-btn').style.display = 'flex';
+          renderDecisionsList();
+          break;
+          
+        case 'decision-status-updated':
+          const statusIndex = decisions.findIndex(d => d.id === message.decision.id);
+          if (statusIndex !== -1) {
+            decisions[statusIndex] = message.decision;
+            
+            // If the detail panel is showing this decision, refresh it to show updated status and history
+            if (currentDetailDecisionId === message.decision.id) {
+              viewDecisionDetails(message.decision.id);
+            }
+          }
+          // Update the decisions list to reflect new status
           renderDecisionsList();
           break;
           

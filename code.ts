@@ -16,6 +16,7 @@ interface Decision {
   pageName?: string; // Adding pageName property
   status: 'proposed' | 'accepted' | 'rejected' | 'deprecated' | 'superseded'; // Adding status property
   nodeExists?: boolean; // Track if the linked Figma node still exists
+  changeHistory?: Array<{status: string, changedBy: string, changedAt: number}>; // Track decision changes
 }
 
 // Define the Resource interface
@@ -594,20 +595,29 @@ figma.ui.onmessage = async (msg) => {
       
     case 'create-decision': {
       // Create a new decision with a unique ID
+      const timestamp = Date.now();
+      const author = figma.currentUser?.name || 'Unknown';
       const newDecision = {
-        id: Date.now().toString(),
+        id: timestamp.toString(),
         title: msg.title,
         rationale: msg.rationale,
         context: msg.context,
-        timestamp: Date.now(),
-        author: figma.currentUser?.name || 'Unknown',
+        timestamp: timestamp,
+        author: author,
         links: msg.links || [],
         pros: msg.pros || [],
         cons: msg.cons || [],
         nodeId: msg.nodeId,
         nodeName: msg.nodeName,
         pageName: msg.pageName, // Store the page name
-        status: msg.status || 'proposed' // Default to 'proposed' if not specified
+        status: msg.status || 'proposed', // Default to 'proposed' if not specified
+        changeHistory: [
+          {
+            status: 'Created',
+            changedBy: author,
+            changedAt: timestamp
+          }
+        ]
       };
       
       // Add to our list and save
@@ -624,14 +634,49 @@ figma.ui.onmessage = async (msg) => {
       break;
     }
       
+    case 'update-decision-status': {
+      // Update only the status of a decision and track it in history
+      const index = decisions.findIndex(d => d.id === msg.id);
+      if (index !== -1) {
+        const newStatus = msg.status;
+        
+        // Initialize changeHistory if it doesn't exist
+        if (!decisions[index].changeHistory) {
+          decisions[index].changeHistory = [];
+        }
+        
+        // Add to change history
+        decisions[index].changeHistory.push({
+          status: newStatus,
+          changedBy: figma.currentUser?.name || 'Unknown',
+          changedAt: Date.now()
+        });
+        
+        decisions[index].status = newStatus;
+        
+        if (saveDecisionsToDocument()) {
+          figma.ui.postMessage({ type: 'decision-status-updated', decision: decisions[index] });
+          figma.notify(`Status updated to ${newStatus}`);
+          
+          // Update visual log as well
+          await updateDecisionInVisualLog(decisions[index]);
+        } else {
+          figma.notify('Error updating status');
+        }
+      }
+      break;
+    }
+    
     case 'edit-decision': {
       // Find and update the decision
       const index = decisions.findIndex(d => d.id === msg.decision.id);
       if (index !== -1) {
+        const oldDecision = decisions[index];
         decisions[index] = {
           ...msg.decision,
           timestamp: Date.now(), // Update timestamp on edit
-          author: decisions[index].author // Preserve the original author
+          author: oldDecision.author, // Preserve the original author
+          changeHistory: oldDecision.changeHistory // Preserve change history
         };
         
         if (saveDecisionsToDocument()) {

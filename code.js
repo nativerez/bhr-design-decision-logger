@@ -485,7 +485,7 @@ figma.ui.on('message', () => {
 });
 // Handle messages from the UI
 figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     // Check for document change on each message from UI
     checkForDocumentChange();
     switch (msg.type) {
@@ -514,20 +514,29 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
         }
         case 'create-decision': {
             // Create a new decision with a unique ID
+            const timestamp = Date.now();
+            const author = ((_b = figma.currentUser) === null || _b === void 0 ? void 0 : _b.name) || 'Unknown';
             const newDecision = {
-                id: Date.now().toString(),
+                id: timestamp.toString(),
                 title: msg.title,
                 rationale: msg.rationale,
                 context: msg.context,
-                timestamp: Date.now(),
-                author: ((_b = figma.currentUser) === null || _b === void 0 ? void 0 : _b.name) || 'Unknown',
+                timestamp: timestamp,
+                author: author,
                 links: msg.links || [],
                 pros: msg.pros || [],
                 cons: msg.cons || [],
                 nodeId: msg.nodeId,
                 nodeName: msg.nodeName,
                 pageName: msg.pageName, // Store the page name
-                status: msg.status || 'proposed' // Default to 'proposed' if not specified
+                status: msg.status || 'proposed', // Default to 'proposed' if not specified
+                changeHistory: [
+                    {
+                        status: 'Created',
+                        changedBy: author,
+                        changedAt: timestamp
+                    }
+                ]
             };
             // Add to our list and save
             decisions.push(newDecision);
@@ -542,11 +551,40 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
             }
             break;
         }
+        case 'update-decision-status': {
+            // Update only the status of a decision and track it in history
+            const index = decisions.findIndex(d => d.id === msg.id);
+            if (index !== -1) {
+                const newStatus = msg.status;
+                // Initialize changeHistory if it doesn't exist
+                if (!decisions[index].changeHistory) {
+                    decisions[index].changeHistory = [];
+                }
+                // Add to change history
+                decisions[index].changeHistory.push({
+                    status: newStatus,
+                    changedBy: ((_c = figma.currentUser) === null || _c === void 0 ? void 0 : _c.name) || 'Unknown',
+                    changedAt: Date.now()
+                });
+                decisions[index].status = newStatus;
+                if (saveDecisionsToDocument()) {
+                    figma.ui.postMessage({ type: 'decision-status-updated', decision: decisions[index] });
+                    figma.notify(`Status updated to ${newStatus}`);
+                    // Update visual log as well
+                    yield updateDecisionInVisualLog(decisions[index]);
+                }
+                else {
+                    figma.notify('Error updating status');
+                }
+            }
+            break;
+        }
         case 'edit-decision': {
             // Find and update the decision
             const index = decisions.findIndex(d => d.id === msg.decision.id);
             if (index !== -1) {
-                decisions[index] = Object.assign(Object.assign({}, msg.decision), { timestamp: Date.now(), author: decisions[index].author // Preserve the original author
+                const oldDecision = decisions[index];
+                decisions[index] = Object.assign(Object.assign({}, msg.decision), { timestamp: Date.now(), author: oldDecision.author, changeHistory: oldDecision.changeHistory // Preserve change history
                  });
                 if (saveDecisionsToDocument()) {
                     figma.ui.postMessage({ type: 'decision-updated', decision: decisions[index] });
@@ -611,8 +649,8 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
             // Send back current user info
             figma.ui.postMessage({
                 type: 'user-info',
-                name: (_c = figma.currentUser) === null || _c === void 0 ? void 0 : _c.name,
-                id: (_d = figma.currentUser) === null || _d === void 0 ? void 0 : _d.id
+                name: (_d = figma.currentUser) === null || _d === void 0 ? void 0 : _d.name,
+                id: (_e = figma.currentUser) === null || _e === void 0 ? void 0 : _e.id
             });
             break;
         }
