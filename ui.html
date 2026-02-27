@@ -1481,6 +1481,10 @@
       document.getElementById('new-decision-btn').style.display = 'none';
       // Prevent body scrolling
       document.body.classList.add('modal-open');
+      // Focus the title input field after a short delay to ensure panel is visible
+      setTimeout(() => {
+        document.getElementById('title').focus();
+      }, 100);
     }
     
     function hideDecisionForm() {
