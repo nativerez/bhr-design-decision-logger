@@ -695,6 +695,56 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
             }
             break;
         }
+        case 'validate-nodes': {
+            try {
+                let deletedCount = 0;
+                let validCount = 0;
+                // Check each decision's linked node
+                for (const decision of decisions) {
+                    if (decision.nodeId) {
+                        try {
+                            const node = yield figma.getNodeByIdAsync(decision.nodeId);
+                            decision.nodeExists = !!node;
+                            if (node) {
+                                validCount++;
+                            }
+                            else {
+                                deletedCount++;
+                            }
+                        }
+                        catch (error) {
+                            decision.nodeExists = false;
+                            deletedCount++;
+                        }
+                    }
+                    else {
+                        decision.nodeExists = undefined; // No node linked
+                    }
+                }
+                // Save updated decisions with nodeExists status
+                saveDecisionsToDocument();
+                // Send updated decisions back to UI
+                figma.ui.postMessage({
+                    type: 'nodes-validated',
+                    decisions: decisions,
+                    summary: { valid: validCount, deleted: deletedCount }
+                });
+                if (deletedCount > 0) {
+                    figma.notify(`Found ${deletedCount} decision${deletedCount > 1 ? 's' : ''} with deleted nodes`);
+                }
+                else if (validCount > 0) {
+                    figma.notify(`All ${validCount} linked nodes are valid`);
+                }
+                else {
+                    figma.notify('No linked nodes to validate');
+                }
+            }
+            catch (error) {
+                console.error('Error validating nodes:', error);
+                figma.notify('Error validating nodes', { error: true });
+            }
+            break;
+        }
         case 'close':
             figma.closePlugin();
             break;

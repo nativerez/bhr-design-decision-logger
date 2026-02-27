@@ -184,10 +184,10 @@
       border-radius: 4px;
       display: flex;
       align-items: center;
-      font-size: 13px;
-    }
-    .tag span {
-      margin-right: 6px;
+      font-size: 10px;
+      text-align: center;
+      color: #000;
+      text-transform: capitalize;
     }
     .tag button {
       background: none;
@@ -207,7 +207,7 @@
       overflow-y: auto;
       width: calc(100% - 40px);
       z-index: 100;
-      display: none;
+      display: none; 
     }
     
     .tag-suggestions.visible {
@@ -306,6 +306,19 @@
       border-left-color: #4A148C; /* Purple for superseded */
     }
     
+    .node-deleted-warning {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 6px;
+      color: #F59E0B;
+    }
+    
+    .node-deleted-warning svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+    
     .figma-node-link .tag:hover {
       background-color: #D4EDFF !important;
     }
@@ -320,7 +333,7 @@
     }
     .decision-title {
       font-weight: 600;
-      font-size: 16px;
+      font-size: 14px;
       padding-right: 75px; /* Make room for the status badge */
       color: #000;
     }
@@ -330,7 +343,7 @@
       margin-bottom: 10px;
     }
     .decision-context {
-      font-size: 14px;
+      font-size: 13px;
       margin-bottom: 10px;
       color: #000;
     }
@@ -734,7 +747,7 @@
 
   <!-- Action Buttons -->
   <div class="export-actions">
-    <button id="rebuild-visual-log-btn" class="button secondary" title="Rebuild visual decision log">
+    <button id="rebuild-visual-log-btn" class="button secondary" title="Rebuild visual log & validate linked nodes">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
         <path d="M3 3v5h5"/>
@@ -1390,8 +1403,9 @@
     
     // Event listener for Rebuild Visual Log button
     document.getElementById('rebuild-visual-log-btn').addEventListener('click', () => {
-      if (confirm('This will rebuild the visual decision log on the "Design Decisions" page. Continue?')) {
+      if (confirm('This will rebuild the visual decision log and validate all linked nodes. Continue?')) {
         parent.postMessage({ pluginMessage: { type: 'rebuild-visual-log' } }, '*');
+        parent.postMessage({ pluginMessage: { type: 'validate-nodes' } }, '*');
       }
     });
     
@@ -2173,10 +2187,21 @@
         if (decision.nodeId && decision.nodeName) {
           const pageNameDisplay = decision.pageName ? 
             `<span style="color: #888; margin-right: 5px; font-size: 11px; display: inline-block;">${decision.pageName}</span>` : '';
+          
+          // Check if node is deleted - show warning icon inside tag
+          const nodeDeletedWarning = decision.nodeExists === false ? 
+            `<span class="node-deleted-warning" title="Linked element deleted from canvas">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </span>` : '';
             
           figmaNodeSection = `
             <div class="figma-node-link" style="margin-top: 8px;">
-              <div class="tag" style="background-color: #E9F5FF; color: #007ACC; display: inline-flex; cursor: pointer;" data-node-id="${decision.nodeId}" data-page-name="${decision.pageName || ''}">
+              <div class="tag" style="background-color: #E9F5FF; color: #007ACC; display: inline-flex; align-items: center; cursor: pointer;" data-node-id="${decision.nodeId}" data-page-name="${decision.pageName || ''}">
+                ${nodeDeletedWarning}
                 ${pageNameDisplay}
                 <span>${decision.nodeName}</span>
               </div>
@@ -2922,6 +2947,22 @@
             console.log('Received file name:', message.fileName);
           }
           console.log('Received document ID via explicit request:', currentDocumentId);
+          break;
+          
+        case 'nodes-validated':
+          // Update decisions with nodeExists status
+          if (message.decisions) {
+            decisions = message.decisions;
+            renderDecisionsList();
+            
+            // If a detail panel is open, update it
+            if (currentDetailDecisionId) {
+              const decision = decisions.find(d => d.id === currentDetailDecisionId);
+              if (decision) {
+                viewDecisionDetails(decision.id);
+              }
+            }
+          }
           break;
       }
     };
