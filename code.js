@@ -216,8 +216,7 @@ function createDecisionTableHeader() {
             { text: 'Details', width: 250 },
             { text: 'Rationale', width: 250 },
             { text: 'Author', width: 120 },
-            { text: 'Date', width: 120 },
-            { text: 'Tags', width: 160 }
+            { text: 'Date', width: 120 }
         ];
         headers.forEach(header => {
             const headerText = figma.createText();
@@ -271,8 +270,7 @@ function createDecisionRow(decision) {
             { text: decision.context.substring(0, 100) + (decision.context.length > 100 ? '...' : ''), width: 250, weight: 'Regular' },
             { text: decision.rationale.substring(0, 100) + (decision.rationale.length > 100 ? '...' : ''), width: 250, weight: 'Regular' },
             { text: decision.author, width: 120, weight: 'Regular' },
-            { text: dateTimeString, width: 120, weight: 'Regular' },
-            { text: decision.tags ? decision.tags.join(', ') : '', width: 160, weight: 'Regular' }
+            { text: dateTimeString, width: 120, weight: 'Regular' }
         ];
         cellData.forEach(cell => {
             const cellText = figma.createText();
@@ -526,7 +524,6 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
                 links: msg.links || [],
                 pros: msg.pros || [],
                 cons: msg.cons || [],
-                tags: msg.tags || [],
                 nodeId: msg.nodeId,
                 nodeName: msg.nodeName,
                 pageName: msg.pageName, // Store the page name
