@@ -229,7 +229,25 @@
       display: flex; align-items: center; transition: color 0.2s ease;
     }
     .detail-close:hover { color: var(--text-primary); }
-    .detail-header .status-badge { position: static; margin-left: 10px; margin-right: 10px; }
+    .detail-info-card {
+      display: flex; align-items: center; gap: 8px;
+      background-color: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 12px; flex-shrink: 0;
+    }
+    .detail-info-card-status { margin-left: auto; flex-shrink: 0; }
+    .detail-info-card .status-badge {
+      position: relative; top: auto; right: auto; margin: 0; overflow: hidden;
+      border-color: currentColor; opacity: 1; padding-right: 18px;
+    }
+    .detail-info-card .status-badge select {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer; z-index: 1;
+    }
+    .status-badge-label { pointer-events: none; }
+    .detail-info-card .status-badge::after {
+      content: "▾"; position: absolute; right: 5px; top: 50%;
+      transform: translateY(-50%); font-size: 9px; pointer-events: none; z-index: 0;
+    }
     .detail-section { margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid var(--border-subtle); }
     .detail-section-title { font-weight: 500; margin-bottom: 10px; font-size: 16px; color: var(--text-faint); padding-bottom: 5px; }
     .detail-section-content { margin-bottom: 20px; line-height: 1.6; font-size: 14px; color: var(--text-body); }
@@ -254,7 +272,8 @@
       padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 500;
       text-transform: uppercase; cursor: pointer; border: 1px solid transparent; transition: all 0.2s ease;
     }
-    .status-badge:hover { opacity: 0.85; border-color: rgba(128,128,128,0.2); }
+    .status-badge:hover { filter: brightness(0.92); }
+    .detail-info-card .status-badge { border-color: currentColor; border-style: solid; border-width: 1px; opacity: 1; }
     .status-badge select {
       background: transparent; border: none; color: inherit; font: inherit;
       cursor: pointer; padding: 0; text-transform: uppercase; font-size: 10px; font-weight: 500;
@@ -308,6 +327,7 @@
     #node-selection .tag { background-color: var(--node-tag-bg) !important; color: var(--node-tag-fg) !important; }
     #node-page { color: var(--text-muted) !important; }
     .empty-state { color: var(--text-muted); }
+    #detail-node-info .tag:hover { filter: brightness(0.9); transform: translateY(-1px); transition: all 0.15s ease; }
   </style>
 </head>
 <body>
@@ -638,27 +658,27 @@
     <div class="detail-header">
       <button class="detail-close" id="detail-close">←</button>
       <div class="detail-title" id="detail-title">Decision Title</div>
-      <div class="status-badge" id="detail-status-container">
-        <select id="detail-status-select">
-          <option value="proposed">Proposed</option>
-          <option value="accepted">Accepted</option>
-          <option value="rejected">Rejected</option>
-          <option value="deprecated">Deprecated</option>
-          <option value="superseded">Superseded</option>
-        </select>
-      </div>
     </div>
 
-    
-    
     <div class="decision-detail-panel-content">
 
-    <div id="detail-node-section" class="detail-section" style="display: none;">
-      <div id="detail-node-info">
-        <!-- Node info will be inserted here -->
+    <div class="detail-info-card">
+      <div id="detail-node-section" style="display: none;">
+        <div id="detail-node-info">
+          <!-- Node info will be inserted here -->
+        </div>
       </div>
-      <div style="margin-top: 10px;">
-        <button id="detail-navigate-button" class="button secondary">Navigate to Element</button>
+      <div class="detail-info-card-status">
+        <div class="status-badge" id="detail-status-container" title="Change status">
+          <span class="status-badge-label" id="detail-status-label">Proposed</span>
+          <select id="detail-status-select">
+            <option value="proposed">Proposed</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
+            <option value="deprecated">Deprecated</option>
+            <option value="superseded">Superseded</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -1868,7 +1888,9 @@
       // Set the value on the NEW select element (must be after cloning)
       newStatusSelect.value = statusText;
       statusContainer.className = 'status-badge ' + statusClass;
-      
+      const statusLabel = document.getElementById('detail-status-label');
+      if (statusLabel) statusLabel.textContent = newStatusSelect.options[newStatusSelect.selectedIndex].text;
+
       // Add event listener for status changes
       newStatusSelect.addEventListener('change', (e) => {
         const newStatus = e.target.value;
@@ -1881,9 +1903,10 @@
               status: newStatus
             }
           }, '*');
-          
-          // Update the container styling
+
+          // Update the container styling and label
           statusContainer.className = 'status-badge status-' + newStatus.toLowerCase();
+          if (statusLabel) statusLabel.textContent = e.target.options[e.target.selectedIndex].text;
         }
       });
       
@@ -1958,33 +1981,18 @@
           `<span style="color: #888; margin-right: 5px; font-size: 10px; display: inline-block;">${decision.pageName}</span>` : '';
           
         nodeContainer.innerHTML = `
-          <div class="tag" style="background-color: #E9F5FF; color: #007ACC; display: inline-flex; cursor: pointer;" data-node-id="${decision.nodeId}">
+          <div class="tag" style="background-color: var(--node-tag-bg); color: var(--node-tag-fg); display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" title="Click to navigate to this element" data-node-id="${decision.nodeId}">
             ${pageNameDisplay}
             <span>${decision.nodeName}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.7;flex-shrink:0;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </div>
         `;
-        
-        // Add click event to the node tag (the container is freshly created each time, so no need to worry about duplicate listeners)
+
         nodeContainer.querySelector('.tag').addEventListener('click', () => {
           navigateToNode(decision.nodeId, decision.pageName);
-          // Close the detail panel after navigating
-          detailPanel.classList.remove('active');
-          
-          // Allow body scrolling when closing the panel
-          document.body.classList.remove('modal-open');
-          
-          // Show the "New Decision" button again when closing detail panel (if on decisions tab)
-          if (activeTab === 'decisions') {
-            document.getElementById('new-decision-btn').style.display = 'flex';
-          }
         });
-        
-        // Show the navigate button
-        document.getElementById('detail-navigate-button').style.display = 'inline-block';
       } else {
         nodeSection.style.display = 'none';
-        // Hide the navigate button if there's no linked node
-        document.getElementById('detail-navigate-button').style.display = 'none';
       }
       
       // Handle change history section
@@ -2075,26 +2083,6 @@
         // Allow body scrolling
         document.body.classList.remove('modal-open');
       });
-      
-      // Handle navigate button click - first remove any existing event listeners by cloning and replacing
-      const navigateButton = document.getElementById('detail-navigate-button');
-      const newNavigateButton = navigateButton.cloneNode(true);
-      navigateButton.parentNode.replaceChild(newNavigateButton, navigateButton);
-      newNavigateButton.onclick = () => {
-        if (decision.nodeId) {
-          navigateToNode(decision.nodeId, decision.pageName);
-          // Close the detail panel after navigating
-          detailPanel.classList.remove('active');
-          
-          // Show the "New Decision" button again when closing detail panel (if on decisions tab)
-          if (activeTab === 'decisions') {
-            document.getElementById('new-decision-btn').style.display = 'flex';
-          }
-          
-          // Allow body scrolling when closing the panel
-          document.body.classList.remove('modal-open');
-        }
-      };
       
       // Show the panel with animation
       detailPanel.classList.add('active');
