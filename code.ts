@@ -157,7 +157,8 @@ function sendSelectionInfo() {
 
 // Check if we've switched to a different document and reload decisions if needed
 function checkForDocumentChange() {
-  if (currentDocumentId !== figma.fileKey || figma.root.id) {
+  const docId = figma.fileKey || figma.root.id;
+  if (currentDocumentId !== docId) {
     console.log('Document changed, reloading decisions');
     initializePlugin();
   }
