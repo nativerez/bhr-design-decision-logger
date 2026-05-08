@@ -2,6 +2,55 @@
 <html>
 <head>
   <style>
+    :root {
+      --bg-base: #f8f9fa;
+      --bg-surface: #ffffff;
+      --bg-interactive: #f5f5f5;
+      --bg-input: #ffffff;
+      --border: #e5e5e5;
+      --border-subtle: #f0f0f0;
+      --border-emphasis: #d0d0d0;
+      --text-primary: #111111;
+      --text-body: #333333;
+      --text-muted: #888888;
+      --text-faint: #666666;
+      --text-placeholder: #999999;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 2px 4px rgba(0,0,0,0.05);
+      --shadow-lg: 0 3px 10px rgba(0,0,0,0.2);
+      --shadow-up: 0 -2px 5px rgba(0,0,0,0.05);
+      --shadow-panel: 0 0 15px rgba(0,0,0,0.1);
+      --shadow-card-hover: 0 3px 8px rgba(0,0,0,0.1);
+      --status-proposed-bg: #E3F2FD; --status-proposed-fg: #0D47A1;
+      --status-accepted-bg: #E8F5E9; --status-accepted-fg: #1B5E20;
+      --status-rejected-bg: #FFEBEE; --status-rejected-fg: #B71C1C;
+      --status-deprecated-bg: #EFEBE9; --status-deprecated-fg: #3E2723;
+      --status-superseded-bg: #F3E5F5; --status-superseded-fg: #4A148C;
+      --card-proposed: #0D47A1; --card-accepted: #1B5E20;
+      --card-rejected: #B71C1C; --card-deprecated: #3E2723; --card-superseded: #4A148C;
+      --pros-bg: #f2fbf2; --cons-bg: #fff0f0;
+      --node-tag-bg: #E9F5FF; --node-tag-fg: #007ACC; --node-tag-hover: #D4EDFF;
+      --select-arrow: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1.5L6 6.5L11 1.5" stroke="%23666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    }
+    [data-theme="dark"] {
+      --bg-base: #18181b; --bg-surface: #27272a; --bg-interactive: #3f3f46; --bg-input: #18181b;
+      --border: #3f3f46; --border-subtle: #333338; --border-emphasis: #52525b;
+      --text-primary: #fafafa; --text-body: #e4e4e7; --text-muted: #71717a;
+      --text-faint: #a1a1aa; --text-placeholder: #52525b;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3); --shadow-md: 0 2px 4px rgba(0,0,0,0.3);
+      --shadow-lg: 0 3px 10px rgba(0,0,0,0.5); --shadow-up: 0 -2px 5px rgba(0,0,0,0.3);
+      --shadow-panel: 0 0 15px rgba(0,0,0,0.5); --shadow-card-hover: 0 3px 8px rgba(0,0,0,0.4);
+      --status-proposed-bg: #1e3a5f; --status-proposed-fg: #90caf9;
+      --status-accepted-bg: #14291a; --status-accepted-fg: #81c784;
+      --status-rejected-bg: #3d1515; --status-rejected-fg: #ef9a9a;
+      --status-deprecated-bg: #2a1e0e; --status-deprecated-fg: #d4a96a;
+      --status-superseded-bg: #2a1540; --status-superseded-fg: #ce93d8;
+      --card-proposed: #3b82f6; --card-accepted: #22c55e; --card-rejected: #ef4444;
+      --card-deprecated: #a16207; --card-superseded: #a855f7;
+      --pros-bg: #14291a; --cons-bg: #291414;
+      --node-tag-bg: #1e3a5f; --node-tag-fg: #60b3f9; --node-tag-hover: #1e3a5f;
+      --select-arrow: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1.5L6 6.5L11 1.5" stroke="%23a1a1aa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    }
     * {
       box-sizing: border-box;
       margin: 0;
@@ -11,736 +60,254 @@
     body {
       font-family: 'Inter', sans-serif;
       font-size: 14px;
-      background: #f8f9fa;
+      background: var(--bg-base);
+      color: var(--text-body);
       padding: 0;
       overflow-x: hidden;
     }
-    
-    body.modal-open {
-      overflow: hidden;
-    }
-    h2 {
-      margin-bottom: 20px;
-      font-weight: 600;
-      font-size: 20px;
-    }
-    h3 {
-      margin-bottom: 16px;
-      font-weight: 500;
-      font-size: 16px;
-    }
+
+    body.modal-open { overflow: hidden; }
+    h2 { margin-bottom: 20px; font-weight: 600; font-size: 20px; }
+    h3 { margin-bottom: 16px; font-weight: 500; font-size: 16px; }
     .tab-container {
       display: flex;
       align-items: center;
-      border-bottom: 1px solid #e5e5e5;
+      border-bottom: 1px solid var(--border);
       margin-bottom: 0;
-      background: #fff;
+      background: var(--bg-surface);
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      box-shadow: var(--shadow-md);
     }
+    .header-actions { margin-left: auto; display: flex; align-items: center; }
     .info-icon-btn {
-      margin-left: auto;
       padding: 8px 16px;
       background: transparent;
       border: none;
       cursor: pointer;
-      color: #666;
+      color: var(--text-faint);
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s ease;
     }
-    .info-icon-btn:hover {
-      color: #18a0fb;
-      background: #f5f5f5;
-    }
-    .info-icon-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-    .tab {
-      padding: 10px 20px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 15px;
-      color: #333;
-    }
-    .tab.active {
-      border-bottom: 2px solid #18a0fb;
-      color: #18a0fb;
-    }
-    /* Tab content visibility control */
+    .info-icon-btn:hover { color: #18a0fb; background-color: var(--bg-interactive); }
+    .info-icon-btn svg { width: 18px; height: 18px; }
+    .tab { padding: 10px 20px; cursor: pointer; font-weight: 500; font-size: 15px; color: var(--text-body); }
+    .tab.active { border-bottom: 2px solid #18a0fb; color: #18a0fb; }
     .tab-content {
-      display: none !important; /* Use !important to override any other styles */
+      display: none !important;
       padding: 16px;
-      background: #f8f9fa;
+      background: var(--bg-base);
       min-height: calc(100vh - 60px);
       padding-top: 60px;
       padding-bottom: 80px;
     }
-    .tab-content.active {
-      display: block !important; /* Use !important to override any other styles */
-    }
-    
-    /* Export buttons styling */
+    .tab-content.active { display: block !important; }
     .export-actions {
       position: fixed;
-      bottom: 16px;
-      left: 16px;
-      display: flex;
-      gap: 8px;
+      bottom: 16px; left: 16px;
+      display: flex; gap: 8px;
       z-index: 100;
-      background: #fff;
-      padding: 6px;
-      border-radius: 24px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      background: var(--bg-surface);
+      padding: 6px; border-radius: 24px;
+      box-shadow: var(--shadow-lg);
     }
-    
     .export-actions .button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      padding: 10px;
-      min-width: 40px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: transparent;
-      border: none;
-      transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; padding: 10px;
+      min-width: 40px; width: 40px; height: 40px;
+      border-radius: 50%; background: transparent; border: none; transition: all 0.2s ease;
     }
-    
-    .export-actions .button svg {
-      width: 18px;
-      height: 18px;
+    .export-actions .button svg { width: 18px; height: 18px; }
+    .export-actions .button:hover { background-color: var(--bg-interactive); }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 14px; color: var(--text-body); }
+    input[type="text"], textarea, select {
+      width: 100%; padding: 10px;
+      border: 1px solid var(--border); border-radius: 4px;
+      font-size: 14px; background: var(--bg-input); color: var(--text-body);
     }
-    
-    .export-actions .button:hover {
-      background-color: #f0f0f0;
-    }
-    
-    .form-group {
-      margin-bottom: 16px;
-    }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      font-size: 14px;
-    }
-    input[type="text"],
-    textarea,
-    select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #e5e5e5;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    textarea {
-      height: 100px;
-      resize: vertical;
-    }
-    .link-item {
-      display: flex;
-      margin-bottom: 10px;
-    }
-    .link-item input {
-      flex: 1;
-      margin-right: 10px;
-    }
-    .link-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 12px;
-    }
-    .pros-cons {
-      display: flex;
-      gap: 16px;
-    }
-    .pros, .cons {
-      flex: 1;
-    }
-    .list-item {
-      display: flex;
-      margin-bottom: 8px;
-    }
-    .list-item input {
-      flex: 1;
-      margin-right: 10px;
-    }
-    .tags-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
-    }
+    input[type="text"]::placeholder, textarea::placeholder { color: var(--text-placeholder); }
+    textarea { height: 100px; resize: vertical; }
+    .link-item { display: flex; margin-bottom: 10px; }
+    .link-item input { flex: 1; margin-right: 10px; }
+    .link-buttons { display: flex; justify-content: space-between; margin-top: 12px; }
+    .pros-cons { display: flex; gap: 16px; }
+    .pros, .cons { flex: 1; }
+    .list-item { display: flex; margin-bottom: 8px; }
+    .list-item input { flex: 1; margin-right: 10px; }
+    .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .tag {
-      background: #f0f0f0;
-      padding: 6px 10px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      font-size: 10px;
-      text-align: center;
-      color: #000;
-      text-transform: capitalize;
+      background: var(--bg-interactive); padding: 6px 10px; border-radius: 4px;
+      display: flex; align-items: center; font-size: 10px; text-align: center;
+      color: var(--text-body); text-transform: capitalize;
     }
-    .tag button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    
-    /* Tag suggestions dropdown */
+    .tag button { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--text-muted); }
     .tag-suggestions {
-      position: absolute;
-      background: white;
-      border: 1px solid #e5e5e5;
-      border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      max-height: 150px;
-      overflow-y: auto;
-      width: calc(100% - 40px);
-      z-index: 100;
-      display: none; 
+      position: absolute; background: var(--bg-surface);
+      border: 1px solid var(--border); border-radius: 4px;
+      box-shadow: var(--shadow-card-hover);
+      max-height: 150px; overflow-y: auto;
+      width: calc(100% - 40px); z-index: 100; display: none;
     }
-    
-    .tag-suggestions.visible {
-      display: block;
-    }
-    
-    .tag-suggestion {
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    
-    .tag-suggestion:hover {
-      background-color: #f5f5f5;
-    }
-    
-    /* Highlighted suggestion */
-    .tag-suggestion.highlighted {
-      background-color: #e9f5ff;
-    }
-    
-    .button {
-      background: #18a0fb;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 8px 16px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 13px;
-    }
-    .button.secondary {
-      background: #f5f5f5;
-      color: #333;
-      border: 1px solid #e5e5e5;
-    }
-    .button.danger {
-      background: transparent;
-      color: #ff5252
-    }
-    .decision-list {
-      margin-top: 16px;
-      /* padding: 16px; */
-      /* background: #f0f2f5; */
-      border-radius: 8px;
-      min-height: 200px;
-    }
-    .resource-list {
-      margin-top: 16px;
-      /* padding: 16px; */
-      /* background: #f0f2f5; */
-      border-radius: 8px;
-      min-height: 200px;
-    }
+    .tag-suggestions.visible { display: block; }
+    .tag-suggestion { padding: 8px 12px; cursor: pointer; font-size: 13px; color: var(--text-body); }
+    .tag-suggestion:hover { background-color: var(--bg-interactive); }
+    .tag-suggestion.highlighted { background-color: var(--status-proposed-bg); color: var(--status-proposed-fg); }
+    .button { background: #18a0fb; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-weight: 500; font-size: 13px; }
+    .button.secondary { background: var(--bg-interactive); color: var(--text-body); border: 1px solid var(--border); }
+    .button.danger { background: transparent; color: #ff5252; }
+    .decision-list { margin-top: 16px; border-radius: 8px; min-height: 200px; }
+    .resource-list { margin-top: 16px; border-radius: 8px; min-height: 200px; }
     .decision-card {
-      padding: 16px;
-      border: 1px solid #e5e5e5;
-      border-radius: 4px;
-      margin-bottom: 16px;
-      background-color: #fff !important;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      position: relative;
-      transition: all 0.2s ease;
-      border-left-width: 4px;
+      padding: 16px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 16px;
+      background-color: var(--bg-surface) !important;
+      box-shadow: var(--shadow-sm); position: relative; transition: all 0.2s ease;
+      border-left-width: 4px; cursor: pointer;
     }
-    
     .decision-card:hover {
-      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-      transform: translateY(-2px);
-      border-top-color: #d0d0d0;
-      border-right-color: #d0d0d0;
-      border-bottom-color: #d0d0d0;
-      /* Left border color preserved for status */
+      box-shadow: var(--shadow-card-hover); transform: translateY(-2px);
+      border-top-color: var(--border-emphasis);
+      border-right-color: var(--border-emphasis);
+      border-bottom-color: var(--border-emphasis);
     }
-    
-    /* Enhanced styling for better clickable affordance */
-    .decision-card {
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    /* Status border colors for decision cards */
-    .decision-card.status-proposed {
-      border-left-color: #0D47A1; /* Blue for proposed */
-    }
-    .decision-card.status-accepted {
-      border-left-color: #1B5E20; /* Green for accepted */
-    }
-    .decision-card.status-rejected {
-      border-left-color: #B71C1C; /* Red for rejected */
-    }
-    .decision-card.status-deprecated {
-      border-left-color: #3E2723; /* Brown for deprecated */
-    }
-    .decision-card.status-superseded {
-      border-left-color: #4A148C; /* Purple for superseded */
-    }
-    
-    .node-deleted-warning {
-      display: inline-flex;
-      align-items: center;
-      margin-right: 6px;
-      color: #F59E0B;
-    }
-    
-    .node-deleted-warning svg {
-      width: 14px;
-      height: 14px;
-      fill: currentColor;
-    }
-    
-    .figma-node-link .tag:hover {
-      background-color: #D4EDFF !important;
-    }
-
-    .figma-node-info {
-      margin-bottom: 20px;
-    }
-    .decision-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .decision-title {
-      font-weight: 600;
-      font-size: 14px;
-      padding-right: 75px; /* Make room for the status badge */
-      color: #000;
-    }
-    .decision-meta {
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 10px;
-    }
-    .decision-context {
-      font-size: 13px;
-      margin-bottom: 10px;
-      color: #000;
-    }
-    .decision-actions {
-      margin-top: 12px;
-      display: flex;
-      gap: 10px;
-    }
+    .decision-card.status-proposed { border-left-color: var(--card-proposed); }
+    .decision-card.status-accepted { border-left-color: var(--card-accepted); }
+    .decision-card.status-rejected { border-left-color: var(--card-rejected); }
+    .decision-card.status-deprecated { border-left-color: var(--card-deprecated); }
+    .decision-card.status-superseded { border-left-color: var(--card-superseded); }
+    .node-deleted-warning { display: inline-flex; align-items: center; margin-right: 6px; color: #F59E0B; }
+    .node-deleted-warning svg { width: 14px; height: 14px; fill: currentColor; }
+    .figma-node-link .tag:hover { background-color: var(--node-tag-hover) !important; }
+    .figma-node-info { margin-bottom: 20px; }
+    .decision-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .decision-title { font-weight: 600; font-size: 14px; padding-right: 75px; color: var(--text-primary); }
+    .decision-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+    .decision-context { font-size: 13px; margin-bottom: 10px; color: var(--text-body); }
+    .decision-actions { margin-top: 12px; display: flex; gap: 10px; }
     .section {
-      margin-bottom: 20px;
-      padding: 16px;
-      border: 1px solid #e5e5e5;
-      border-radius: 4px;
-      margin-bottom: 16px;
-      background-color: #fff;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      position: relative;
-      transition: all 0.2s ease;
+      margin-bottom: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 4px;
+      background-color: var(--bg-surface); box-shadow: var(--shadow-sm);
+      position: relative; transition: all 0.2s ease;
     }
     .filter-bar {
-      display: flex;
-      margin-bottom: 16px;
-      gap: 10px;
-      position: fixed;
-      top: 42px;
-      left: 0;
-      right: 0;
-      background: #fff;
-      padding: 12px 16px;
-      z-index: 99;
-      border-bottom: 1px solid #e5e5e5;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+      display: flex; margin-bottom: 16px; gap: 10px;
+      position: fixed; top: 42px; left: 0; right: 0;
+      background: var(--bg-surface); padding: 12px 16px; z-index: 99;
+      border-bottom: 1px solid var(--border); box-shadow: var(--shadow-md);
     }
-    .filter-bar input, 
-    .filter-bar select {
-      flex: 1;
-      min-width: 0; /* Prevents flex items from overflowing */
-      font-size: 12px;
-      padding: 6px 10px;
-      border: none;
-      background: transparent;
-      color: #666;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      border-radius: 4px;
-      transition: all 0.2s ease;
+    .filter-bar input, .filter-bar select {
+      flex: 1; min-width: 0; font-size: 12px; padding: 6px 10px;
+      border: none; background: transparent; color: var(--text-faint);
+      cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none;
+      border-radius: 4px; transition: all 0.2s ease;
     }
-    .filter-bar input:hover,
-    .filter-bar select:hover {
-      background-color: #f5f5f5;
-      color: #333;
-    }
-    .filter-bar input:focus,
-    .filter-bar select:focus {
-      background-color: #f0f0f0;
-      color: #333;
-      outline: none;
-    }
-    .filter-bar input {
-      border: 1px solid #e5e5e5;
-      background: #fff;
-    }
-    .filter-bar input::placeholder {
-      color: #999;
-      font-size: 12px;
-    }
-    .filter-bar select {
-      background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1.5L6 6.5L11 1.5" stroke="%23666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
-      background-repeat: no-repeat;
-      background-position: right 8px center;
-      padding-right: 28px;
-    }
-    
-    /* New styles for detail panel */
+    .filter-bar input:hover, .filter-bar select:hover { background-color: var(--bg-interactive); color: var(--text-body); }
+    .filter-bar input:focus, .filter-bar select:focus { background-color: var(--bg-interactive); color: var(--text-body); outline: none; }
+    .filter-bar input { border: 1px solid var(--border); background: var(--bg-input); color: var(--text-body); }
+    .filter-bar input::placeholder { color: var(--text-placeholder); font-size: 12px; }
+    .filter-bar select { background-image: var(--select-arrow); background-repeat: no-repeat; background-position: right 8px center; padding-right: 28px; }
     .decision-detail-panel {
-      position: fixed;
-      top: 0;
-      right: -100%;
-      width: 100%;
-      height: 100%;
-      background: white;
-      z-index: 150;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      transition: right 0.3s ease;
-      display: flex;
-      flex-direction: column;
+      position: fixed; top: 0; right: -100%; width: 100%; height: 100%;
+      background: var(--bg-surface); z-index: 150;
+      box-shadow: var(--shadow-panel); transition: right 0.3s ease; display: flex; flex-direction: column;
     }
-    
-    .decision-detail-panel-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 20px 20px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-    .decision-detail-panel.active {
-      right: 0;
-    }
+    .decision-detail-panel-content { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+    .decision-detail-panel.active { right: 0; }
     .detail-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 20px 12px 20px;
-      border-bottom: 1px solid #eee;
-      background-color: white;
-      flex-shrink: 0;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      z-index: 3; /* Increased z-index to be higher than form-actions */
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px 20px 12px 20px; border-bottom: 1px solid var(--border);
+      background-color: var(--bg-surface); flex-shrink: 0;
+      box-shadow: var(--shadow-md); z-index: 3;
     }
-    .detail-title {
-      font-weight: 600;
-      font-size: 20px;
-      color: #333;
-      flex: 1;
-    }
+    .detail-title { font-weight: 600; font-size: 20px; color: var(--text-primary); flex: 1; }
     .detail-close {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 24px;
-      margin-right: 12px;
-      padding: 0;
-      color: #666;
-      display: flex;
-      align-items: center;
-      transition: color 0.2s ease;
+      background: none; border: none; cursor: pointer; font-size: 24px;
+      margin-right: 12px; padding: 0; color: var(--text-faint);
+      display: flex; align-items: center; transition: color 0.2s ease;
     }
-    .detail-close:hover {
-      color: #333;
-    }
-    .detail-header .status-badge {
-      position: static;
-      margin-left: 10px;
-      margin-right: 10px;
-    }
-    .detail-section {
-      margin-bottom: 15px;
-      padding-bottom: 5px;
-      border-bottom: 1px solid #f5f5f5;
-    }
-    .detail-section-title {
-      font-weight: 500;
-      margin-bottom: 10px;
-      font-size: 16px;
-      color: #555;
-      padding-bottom: 5px;
-    }
-    .detail-section-content {
-      margin-bottom: 20px;
-      line-height: 1.6;
-      font-size: 14px;
-    }
-    .detail-meta {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: #888;
-    }
-    .detail-links {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .detail-link {
-      display: block;
-      color: #18a0fb;
-      text-decoration: none;
-      font-size: 14px;
-    }
-    .detail-pros-cons {
-      display: flex;
-      gap: 16px;
-      margin-top: 10px;
-    }
-    .detail-pros, .detail-cons {
-      flex: 1;
-      padding: 12px;
-      border-radius: 4px;
-    }
-    .detail-pros {
-      background-color: #f2fbf2;
-    }
-    .detail-cons {
-      background-color: #fff0f0;
-    }
-    .detail-list-title {
-      font-weight: 500;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-    .detail-list {
-      list-style-position: inside;
-      padding-left: 6px;
-      font-size: 14px;
-    }
-    .detail-list li {
-      margin-bottom: 6px;
-    }
+    .detail-close:hover { color: var(--text-primary); }
+    .detail-header .status-badge { position: static; margin-left: 10px; margin-right: 10px; }
+    .detail-section { margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid var(--border-subtle); }
+    .detail-section-title { font-weight: 500; margin-bottom: 10px; font-size: 16px; color: var(--text-faint); padding-bottom: 5px; }
+    .detail-section-content { margin-bottom: 20px; line-height: 1.6; font-size: 14px; color: var(--text-body); }
+    .detail-meta { display: flex; gap: 20px; margin-bottom: 20px; font-size: 13px; color: var(--text-muted); }
+    .detail-links { display: flex; flex-direction: column; gap: 8px; }
+    .detail-link { display: block; color: #18a0fb; text-decoration: none; font-size: 14px; }
+    .detail-pros-cons { display: flex; gap: 16px; margin-top: 10px; }
+    .detail-pros, .detail-cons { flex: 1; padding: 12px; border-radius: 4px; }
+    .detail-pros { background-color: var(--pros-bg); }
+    .detail-cons { background-color: var(--cons-bg); }
+    .detail-list-title { font-weight: 500; margin-bottom: 8px; font-size: 14px; }
+    .detail-list { list-style-position: inside; padding-left: 6px; font-size: 14px; }
+    .detail-list li { margin-bottom: 6px; }
     .detail-actions {
-      padding: 15px 20px;
-      background-color: white;
-      border-top: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-shrink: 0;
-      box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
-      position: sticky;
-      bottom: 0;
-      right: 0;
-      left: 0;
-      z-index: 2;
-      width: 100%;
-      box-sizing: border-box;
-      margin-top: auto;
+      padding: 15px 20px; background-color: var(--bg-surface); border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; gap: 10px; flex-shrink: 0;
+      box-shadow: var(--shadow-up); position: sticky; bottom: 0; right: 0; left: 0; z-index: 2;
+      width: 100%; box-sizing: border-box; margin-top: auto;
     }
-    
     .status-badge {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 500;
-      text-transform: uppercase;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.2s ease;
+      position: absolute; top: 16px; right: 16px;
+      padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 500;
+      text-transform: uppercase; cursor: pointer; border: 1px solid transparent; transition: all 0.2s ease;
     }
-    .status-badge:hover {
-      opacity: 0.8;
-      border-color: rgba(0,0,0,0.1);
-    }
+    .status-badge:hover { opacity: 0.85; border-color: rgba(128,128,128,0.2); }
     .status-badge select {
-      background: transparent;
-      border: none;
-      color: inherit;
-      font: inherit;
-      cursor: pointer;
-      padding: 0;
-      text-transform: uppercase;
-      font-size: 10px;
-      font-weight: 500;
-      outline: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
+      background: transparent; border: none; color: inherit; font: inherit;
+      cursor: pointer; padding: 0; text-transform: uppercase; font-size: 10px; font-weight: 500;
+      outline: none; -webkit-appearance: none; -moz-appearance: none; appearance: none;
     }
-    .status-proposed {
-      background-color: #E3F2FD;
-      color: #0D47A1;
-    }
-    .status-accepted {
-      background-color: #E8F5E9;
-      color: #1B5E20;
-    }
-    .status-rejected {
-      background-color: #FFEBEE;
-      color: #B71C1C;
-    }
-    .status-deprecated {
-      background-color: #EFEBE9;
-      color: #3E2723;
-    }
-    .status-superseded {
-      background-color: #F3E5F5;
-      color: #4A148C;
-    }
-    
-    .change-history {
-      margin-top: 20px;
-      padding-top: 15px;
-      border-top: 1px solid #eee;
-    }
-    .change-history-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: #666;
-      margin-bottom: 10px;
-    }
+    .status-proposed { background-color: var(--status-proposed-bg); color: var(--status-proposed-fg); }
+    .status-accepted { background-color: var(--status-accepted-bg); color: var(--status-accepted-fg); }
+    .status-rejected { background-color: var(--status-rejected-bg); color: var(--status-rejected-fg); }
+    .status-deprecated { background-color: var(--status-deprecated-bg); color: var(--status-deprecated-fg); }
+    .status-superseded { background-color: var(--status-superseded-bg); color: var(--status-superseded-fg); }
+    .change-history { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
+    .change-history-title { font-size: 12px; font-weight: 600; color: var(--text-faint); margin-bottom: 10px; }
     .change-history-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      font-size: 12px;
-      color: #666;
-      border-bottom: 1px solid #f5f5f5;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; font-size: 12px; color: var(--text-faint);
+      border-bottom: 1px solid var(--border-subtle);
     }
-    .change-history-item:last-child {
-      border-bottom: none;
-    }
-    .change-history-status {
-      font-weight: 500;
-      text-transform: capitalize;
-    }
-    
-    /* New action button style */
+    .change-history-item:last-child { border-bottom: none; }
+    .change-history-status { font-weight: 500; text-transform: capitalize; }
     .action-button {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
-      width: auto;
-      height: auto;
-      border-radius: 999px;
-      background-color: #18a0fb;
-      color: white;
-      display: flex;
-      grid-gap: 6px;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-      z-index: 100;
-      transition: all 0.2s ease;
-      font-size: 20px;
-      border: none;
-      padding: 14px 16px;
+      position: fixed; bottom: 16px; right: 16px;
+      width: auto; height: auto; border-radius: 999px;
+      background-color: #18a0fb; color: white;
+      display: flex; grid-gap: 6px; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-lg); cursor: pointer; z-index: 100;
+      transition: all 0.2s ease; font-size: 20px; border: none; padding: 14px 16px;
     }
-    
-    .action-button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    .action-button span {
-      font-size: 13px;
-      display: inline-block;
-      flex: none;
-    }
-    
-    /* Decision form panel style */
+    .action-button:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .action-button span { font-size: 13px; display: inline-block; flex: none; }
     .decision-form-panel {
-      position: fixed;
-      top: 0;
-      right: -100%;
-      width: 100%;
-      height: 100%;
-      z-index: 150;
-      background-color: #fff;
-      transition: right 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden; /* Prevents double scrollbars */
+      position: fixed; top: 0; right: -100%; width: 100%; height: 100%; z-index: 150;
+      background-color: var(--bg-surface); transition: right 0.3s ease;
+      display: flex; flex-direction: column; overflow: hidden;
     }
-    
-    .decision-form-panel.active {
-      right: 0;
-    }
-    
+    .decision-form-panel.active { right: 0; }
     .decision-form-panel form {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 20px 0 20px;
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 0;
-      min-height: calc(100% - 60px); /* Ensures form takes up full height minus header */
+      flex: 1; overflow-y: auto; padding: 20px 20px 0 20px;
+      display: flex; flex-direction: column; margin-bottom: 0;
+      min-height: calc(100% - 60px);
     }
-    
-    .decision-form-panel form .section:last-of-type {
-      margin-bottom: 80px; /* Provide extra space at bottom to prevent content from being hidden behind fixed buttons */
-      padding-bottom: 20px;
-    }
-    
-    
-    .decision-form-panel form .form-group {
-      padding-bottom: 5px;
-    }
-    
+    .decision-form-panel form .section:last-of-type { margin-bottom: 80px; padding-bottom: 20px; }
+    .decision-form-panel form .form-group { padding-bottom: 5px; }
     .form-actions {
-      padding: 15px 20px;
-      background-color: white;
-      border-top: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-shrink: 0;
-      box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
-      position: sticky;
-      bottom: 0;
-      right: 0;
-      left: 0;
-      z-index: 2;
-      width: 100%;
-      box-sizing: border-box;
-      margin-top: auto;
+      padding: 15px 20px; background-color: var(--bg-surface); border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; gap: 10px; flex-shrink: 0;
+      box-shadow: var(--shadow-up); position: sticky; bottom: 0; right: 0; left: 0; z-index: 2;
+      width: 100%; box-sizing: border-box; margin-top: auto;
     }
-    .content-main {
-      position: relative;
-      width: 100%;
-    }
+    .content-main { position: relative; width: 100%; }
+    #no-selection { color: var(--text-muted) !important; }
+    #node-selection .tag { background-color: var(--node-tag-bg) !important; color: var(--node-tag-fg) !important; }
+    #node-page { color: var(--text-muted) !important; }
+    .empty-state { color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -749,13 +316,18 @@
   <div class="tab-container">
     <div class="tab active" data-tab="decisions">Decisions</div>
     <div class="tab" data-tab="resources">Resources</div>
-    <button id="info-icon-btn" class="info-icon-btn" title="About">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="16" x2="12" y2="12"/>
-        <line x1="12" y1="8" x2="12.01" y2="8"/>
-      </svg>
-    </button>
+    <div class="header-actions">
+      <button id="theme-toggle-btn" class="info-icon-btn" title="Toggle theme">
+        <!-- icon set by JS -->
+      </button>
+      <button id="info-icon-btn" class="info-icon-btn" title="About">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- Decision History -->
@@ -838,26 +410,26 @@
               <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
             </svg>
           </div>
-          <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 8px; color: #1a1a1a;">Rationale</h2>
-          <p style="color: #666; font-size: 14px; line-height: 1.6;">A Figma plugin for documenting and tracking design decisions</p>
+          <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Rationale</h2>
+          <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">A Figma plugin for documenting and tracking design decisions</p>
         </div>
 
-        <div style="background: #f8f9fa; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a1a;">About</h3>
-          <p style="color: #666; font-size: 14px; line-height: 1.8; margin-bottom: 12px;">
-            Rationale helps design teams capture the context and reasoning behind their design decisions. 
+        <div style="background: var(--bg-interactive); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary);">About</h3>
+          <p style="color: var(--text-muted); font-size: 14px; line-height: 1.8; margin-bottom: 12px;">
+            Rationale helps design teams capture the context and reasoning behind their design decisions.
             Link decisions to Figma elements, track their status, and maintain a searchable history of your project's evolution.
           </p>
         </div>
 
-        <div style="background: #f8f9fa; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a1a;">Created By</h3>
+        <div style="background: var(--bg-interactive); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary);">Created By</h3>
           <div style="display: flex; align-items: center; gap: 12px;">
             <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 18px;">
               JW
             </div>
             <div style="flex: 1;">
-              <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">Jamie Wallace</div>
+              <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Jamie Wallace</div>
               <a href="https://www.figma.com/@nativerez" target="_blank" style="color: #18a0fb; text-decoration: none; font-size: 13px; display: flex; align-items: center; gap: 4px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -870,7 +442,7 @@
           </div>
         </div>
 
-        <div style="text-align: center; padding: 16px; color: #999; font-size: 12px;">
+        <div style="text-align: center; padding: 16px; color: var(--text-placeholder); font-size: 12px;">
           Version 1.0.0
         </div>
       </div>
@@ -890,8 +462,8 @@
       <div id="figma-node-info" class="figma-node-info">
         <div id="no-selection" style="color: #888; font-style: italic;">No element selected. Select a Figma element before creating a decision to link it.</div>
         <div id="node-selection" style="display: none;">
-          <div class="tag" style="background-color: #E9F5FF; color: #007ACC;">
-            <span id="node-page" style="color: #888; margin-right: 5px; font-size: 11px;"></span>
+          <div class="tag" style="background-color: #1e3a5f; color: #60b3f9;">
+            <span id="node-page" style="color: #71717a; margin-right: 5px; font-size: 11px;"></span>
             <span id="node-name">Element name</span>
           </div>
         </div>
@@ -915,7 +487,7 @@
       
       <!-- Links Section -->
       <div class="section">
-        <h3>Links & References <span style="color: #888; font-size: 12px; font-weight: normal;">(Optional)</span></h3>
+        <h3>Links & References <span style="color: var(--text-muted); font-size: 12px; font-weight: normal;">(Optional)</span></h3>
         <div id="links-container">
           <div class="link-item">
             <input type="text" placeholder="Title" class="link-title">
@@ -928,7 +500,7 @@
       
       <!-- Pros & Cons Section -->
       <div class="section">
-        <h3>Pros & Cons <span style="color: #888; font-size: 12px; font-weight: normal;">(Optional)</span></h3>
+        <h3>Pros & Cons <span style="color: var(--text-muted); font-size: 12px; font-weight: normal;">(Optional)</span></h3>
         <div class="pros-cons">
           <div class="pros">
             <label>Pros</label>
@@ -1003,7 +575,7 @@
       
       <!-- Tags Section -->
       <div class="section">
-        <h3>Tags <span style="color: #888; font-size: 12px; font-weight: normal;">(Optional)</span></h3>
+        <h3>Tags <span style="color: var(--text-muted); font-size: 12px; font-weight: normal;">(Optional)</span></h3>
         <div style="position: relative;">
           <input type="text" id="resource-tag-input" placeholder="Add tags (comma separated)">
           <div id="resource-tag-suggestions" class="tag-suggestions"></div>
@@ -1144,6 +716,29 @@
   </div>
 
   <script>
+    // Theme toggle
+    const MOON_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    const SUN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const btn = document.getElementById('theme-toggle-btn');
+      if (btn) {
+        btn.innerHTML = theme === 'dark' ? SUN_ICON : MOON_ICON;
+        btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+      }
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      parent.postMessage({ pluginMessage: { type: 'set-theme', theme: next } }, '*');
+    }
+
+    // Apply light theme immediately so nothing flashes; load-theme message will correct it if needed
+    applyTheme('light');
+
     // Global variables
     let decisions = [];
     let resources = []; // Array to store all resources
@@ -1505,6 +1100,8 @@
     // New Decision Button - show the form panel
     document.getElementById('new-decision-btn').addEventListener('click', showDecisionForm);
     
+    document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+
     // Info panel handlers
     document.getElementById('info-icon-btn').addEventListener('click', () => {
       document.getElementById('info-panel').classList.add('active');
@@ -2642,6 +2239,10 @@
       if (!message) return;
       
       switch (message.type) {
+        case 'load-theme':
+          applyTheme(message.theme || 'light');
+          break;
+
         case 'load-decisions':
           decisions = message.decisions || [];
           // Store the document ID for deep links

@@ -83,6 +83,11 @@ async function initializePlugin() {
       resources = [];
       figma.ui.postMessage({ type: 'load-resources', resources: [] });
     }
+
+    // Send saved theme preference to UI
+    const savedTheme = await figma.clientStorage.getAsync('ui-theme');
+    figma.ui.postMessage({ type: 'load-theme', theme: savedTheme || 'light' });
+
   } catch (error) {
     console.error('Error loading saved data:', error);
     figma.notify('Error loading saved data');
@@ -888,6 +893,10 @@ figma.ui.onmessage = async (msg) => {
       break;
     }
       
+    case 'set-theme':
+      await figma.clientStorage.setAsync('ui-theme', msg.theme);
+      break;
+
     case 'close':
       figma.closePlugin();
       break;
